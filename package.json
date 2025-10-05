@@ -1,0 +1,31 @@
+{
+  "name": "coursesignal",
+  "version": "1.0.0",
+  "description": "Revenue attribution analytics for course creators",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "frontend",
+    "tracking-script"
+  ],
+  "scripts": {
+    "dev:backend": "npm run dev --workspace=backend",
+    "dev:frontend": "npm run dev --workspace=frontend",
+    "dev:tracking": "npm run dev --workspace=tracking-script",
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\" --names \"backend,frontend\" --prefix-colors \"blue,green\"",
+    "build": "npm run build --workspaces",
+    "build:tracking": "npm run build --workspace=tracking-script",
+    "migrate": "npm run migrate --workspace=backend",
+    "test": "npm run test --workspaces"
+  },
+  "keywords": [
+    "analytics",
+    "attribution",
+    "course-creators"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}

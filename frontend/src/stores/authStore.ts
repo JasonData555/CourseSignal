@@ -31,7 +31,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     localStorage.setItem('access_token', accessToken);
     localStorage.setItem('refresh_token', refreshToken);
 
-    set({ user, isAuthenticated: true });
+    set({ user, isAuthenticated: true, loading: false });
   },
 
   signup: async (email: string, password: string) => {

@@ -1,17 +1,46 @@
 import { Link, useLocation } from 'react-router-dom';
-import { BarChart3, Settings, User, LogOut } from 'lucide-react';
+import { BarChart3, Settings, User, LogOut, Rocket } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useAuthStore } from '../../stores/authStore';
+import { useState, useEffect } from 'react';
+import api from '../../lib/api';
 
 export function Navigation() {
   const location = useLocation();
   const { logout, user } = useAuthStore();
+  const [activeLaunchCount, setActiveLaunchCount] = useState<number>(0);
+
+  useEffect(() => {
+    // Fetch active launch count
+    const fetchActiveLaunches = async () => {
+      try {
+        const response = await api.get('/launches', {
+          params: { status: 'active', limit: 100 },
+        });
+        setActiveLaunchCount(response.data.launches?.length || 0);
+      } catch (error) {
+        // Silently fail - badge just won't show
+        console.error('Failed to fetch active launches:', error);
+      }
+    };
+
+    fetchActiveLaunches();
+    // Refresh every 5 minutes
+    const interval = setInterval(fetchActiveLaunches, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   const navItems = [
     {
       path: '/dashboard',
       label: 'Dashboard',
       icon: BarChart3,
+    },
+    {
+      path: '/launches',
+      label: 'Launches',
+      icon: Rocket,
+      badge: activeLaunchCount,
     },
     {
       path: '/settings',
@@ -25,7 +54,12 @@ export function Navigation() {
     },
   ];
 
-  const isActive = (path: string) => location.pathname === path;
+  const isActive = (path: string) => {
+    if (path === '/launches') {
+      return location.pathname.startsWith('/launches');
+    }
+    return location.pathname === path;
+  };
 
   return (
     <nav className="bg-white border-b border-gray-200 sticky top-0 z-40 shadow-sm">
@@ -46,7 +80,7 @@ export function Navigation() {
                   key={item.path}
                   to={item.path}
                   className={clsx(
-                    'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors',
+                    'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-normal relative',
                     isActive(item.path)
                       ? 'bg-primary-50 text-primary-700'
                       : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
@@ -54,6 +88,12 @@ export function Navigation() {
                 >
                   <Icon className="w-4 h-4" />
                   <span className="hidden sm:inline">{item.label}</span>
+                  {/* Active launch badge */}
+                  {item.badge && item.badge > 0 && (
+                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-success-600 text-white text-xs font-bold rounded-full flex items-center justify-center">
+                      {item.badge}
+                    </span>
+                  )}
                 </Link>
               );
             })}
@@ -67,7 +107,7 @@ export function Navigation() {
               )}
               <button
                 onClick={logout}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors duration-normal"
                 title="Log out"
               >
                 <LogOut className="w-4 h-4" />

@@ -7,18 +7,27 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Professional blue palette (trustworthy, data-focused)
+        // Sophisticated slate-blue palette (professional, data-forward)
         primary: {
-          50: '#f0f9ff',
-          100: '#e0f2fe',
-          200: '#bae6fd',
-          300: '#7dd3fc',
-          400: '#38bdf8',
-          500: '#0ea5e9',
-          600: '#0284c7',
-          700: '#0369a1',
-          800: '#075985',
-          900: '#0c4a6e',
+          50: '#f8fafc',
+          100: '#f1f5f9',
+          200: '#e2e8f0',
+          300: '#cbd5e1',
+          400: '#94a3b8',
+          500: '#64748b',
+          600: '#475569',
+          700: '#334155',
+          800: '#1e293b',
+          900: '#0f172a',
+          950: '#020617',
+        },
+        // Background colors for surfaces
+        background: {
+          page: '#fafbfc',
+          card: '#ffffff',
+          elevated: '#ffffff',
+          subtle: '#f8fafc',
+          muted: '#f1f5f9',
         },
         // Success/positive - revenue growth, high conversion
         success: {
@@ -59,6 +68,19 @@ export default {
           800: '#991b1b',
           900: '#7f1d1d',
         },
+        // Info - neutral informational messages
+        info: {
+          50: '#eff6ff',
+          100: '#dbeafe',
+          200: '#bfdbfe',
+          300: '#93c5fd',
+          400: '#60a5fa',
+          500: '#3b82f6',
+          600: '#2563eb',
+          700: '#1d4ed8',
+          800: '#1e40af',
+          900: '#1e3a8a',
+        },
         // Neutral grays for text hierarchy, whites for cards
         gray: {
           50: '#f9fafb',
@@ -72,23 +94,47 @@ export default {
           800: '#1f2937',
           900: '#111827',
         },
+        // Data visualization palette for charts
+        chart: {
+          series1: '#6366f1', // Indigo
+          series2: '#8b5cf6', // Purple
+          series3: '#ec4899', // Pink
+          series4: '#f59e0b', // Amber
+          series5: '#10b981', // Emerald
+          series6: '#06b6d4', // Cyan
+          neutral: '#64748b', // Slate for baselines
+          gridLines: '#f1f5f9',
+          background: '#fafbfc',
+        },
       },
       fontFamily: {
         // System fonts for speed (SF Pro on Mac, Segoe UI on Windows)
         sans: ['-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
+        // Monospace for code/data
+        mono: ['SF Mono', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', 'monospace'],
       },
       fontSize: {
-        // Typography scale following design principles
-        'xs': ['12px', { lineHeight: '16px' }],      // Secondary info
-        'sm': ['14px', { lineHeight: '20px' }],      // Body text
-        'base': ['16px', { lineHeight: '24px' }],    // Body text
-        'lg': ['18px', { lineHeight: '28px' }],      // Large body
-        'xl': ['20px', { lineHeight: '28px' }],      // Subheadings
-        '2xl': ['24px', { lineHeight: '32px' }],     // Key metrics (small)
-        '3xl': ['30px', { lineHeight: '36px' }],     // Key metrics
-        '4xl': ['36px', { lineHeight: '40px' }],     // Key metrics (large)
-        '5xl': ['48px', { lineHeight: '1' }],        // Hero numbers
-        '6xl': ['60px', { lineHeight: '1' }],        // Hero numbers (large)
+        // Micro text (labels, captions)
+        'xs': ['11px', { lineHeight: '16px', letterSpacing: '0.01em' }],
+        // Small text (secondary info, table data)
+        'sm': ['13px', { lineHeight: '18px', letterSpacing: '0' }],
+        // Base body text (paragraphs, descriptions)
+        'base': ['15px', { lineHeight: '22px', letterSpacing: '0' }],
+        // Large body text (emphasized content)
+        'lg': ['17px', { lineHeight: '26px', letterSpacing: '-0.01em' }],
+        // Small headings (card titles, section labels)
+        'xl': ['19px', { lineHeight: '28px', letterSpacing: '-0.01em' }],
+        // Medium headings (page sections)
+        '2xl': ['22px', { lineHeight: '30px', letterSpacing: '-0.02em' }],
+        // Large headings (page titles)
+        '3xl': ['28px', { lineHeight: '36px', letterSpacing: '-0.02em' }],
+        // Display text (hero sections)
+        '4xl': ['36px', { lineHeight: '42px', letterSpacing: '-0.03em' }],
+        // METRICS - Special sizes for data display
+        'metric-sm': ['24px', { lineHeight: '30px', letterSpacing: '-0.02em', fontWeight: '600' }],
+        'metric-md': ['32px', { lineHeight: '38px', letterSpacing: '-0.03em', fontWeight: '600' }],
+        'metric-lg': ['42px', { lineHeight: '48px', letterSpacing: '-0.04em', fontWeight: '600' }],
+        'metric-xl': ['56px', { lineHeight: '60px', letterSpacing: '-0.04em', fontWeight: '700' }],
       },
       fontWeight: {
         normal: '400',  // Regular text for labels
@@ -97,17 +143,43 @@ export default {
         bold: '700',    // Bold numbers (they're the hero)
       },
       boxShadow: {
-        'card': '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+        // Cards at rest
+        'card': '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+        // Cards on hover
         'card-hover': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+        // Modals, dropdowns (elevated)
+        'elevated': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+        // Focus states
+        'focus': '0 0 0 3px rgba(99, 102, 241, 0.1)',
       },
       spacing: {
         // Generous whitespace
         '18': '4.5rem',
+        '22': '5.5rem',
         '88': '22rem',
         '128': '32rem',
       },
       borderRadius: {
-        'card': '8px',
+        'sm': '4px',
+        'DEFAULT': '6px',
+        'md': '8px',
+        'lg': '12px',
+        'xl': '16px',
+        'card': '8px', // Alias for consistency
+      },
+      transitionDuration: {
+        'fast': '100ms',
+        'normal': '150ms',
+        'slow': '300ms',
+      },
+      transitionTimingFunction: {
+        'smooth': 'cubic-bezier(0.4, 0, 0.2, 1)',
+        'snappy': 'cubic-bezier(0.2, 0, 0, 1)',
+      },
+      maxWidth: {
+        'dashboard': '1400px',
+        'content': '1200px',
+        'narrow': '800px',
       },
     },
   },

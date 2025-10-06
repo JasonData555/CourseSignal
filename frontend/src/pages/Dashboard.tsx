@@ -13,6 +13,7 @@ import {
   RevenueBySource,
   RecentPurchases,
   SmartRecommendations,
+  QuickInsights,
   SourceData,
   Purchase,
   Recommendation,
@@ -183,15 +184,81 @@ export default function Dashboard() {
   if (!summaryData || summaryData.totalPurchases === 0) {
     return (
       <DashboardLayout>
-        <EmptyState
-          icon={<Database className="w-12 h-12 text-gray-400" />}
-          title="No data yet"
-          description="Connect your Kajabi account or install the tracking script to start seeing your revenue analytics."
-          action={{
-            label: 'Go to Settings',
-            onClick: () => (window.location.href = '/settings'),
-          }}
-        />
+        <div className="max-w-3xl mx-auto">
+          <div className="text-center mb-8">
+            <Database className="w-16 h-16 text-primary-400 mx-auto mb-4" />
+            <h1 className="text-3xl font-bold text-gray-900 mb-3">
+              Ready to see where your revenue comes from?
+            </h1>
+            <p className="text-lg text-gray-600">
+              CourseSignal tracks every purchase back to its source.
+              <br />
+              Here's how to get started:
+            </p>
+          </div>
+
+          <div className="space-y-4 mb-8">
+            {/* Step 1 */}
+            <div className="flex items-start gap-4 p-6 bg-white border border-gray-200 rounded-lg shadow-sm">
+              <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-primary-100 text-primary-700 rounded-full font-bold">
+                1
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                  Connect Your Platform
+                </h3>
+                <p className="text-sm text-gray-600">
+                  Link your Kajabi or Teachable account to automatically import purchases.
+                </p>
+              </div>
+            </div>
+
+            {/* Step 2 */}
+            <div className="flex items-start gap-4 p-6 bg-white border border-gray-200 rounded-lg shadow-sm">
+              <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-primary-100 text-primary-700 rounded-full font-bold">
+                2
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                  Install Tracking Script
+                </h3>
+                <p className="text-sm text-gray-600">
+                  Add a simple code snippet to your course site to track visitor sources.
+                </p>
+              </div>
+            </div>
+
+            {/* Step 3 */}
+            <div className="flex items-start gap-4 p-6 bg-white border border-gray-200 rounded-lg shadow-sm">
+              <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center bg-primary-100 text-primary-700 rounded-full font-bold">
+                3
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                  See Results
+                </h3>
+                <p className="text-sm text-gray-600">
+                  Watch your dashboard populate with attribution data as purchases come in.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Button
+              onClick={() => (window.location.href = '/settings')}
+              size="lg"
+            >
+              Start Setup
+            </Button>
+          </div>
+
+          <div className="mt-6 text-center">
+            <p className="text-sm text-gray-500">
+              Setup takes about 5 minutes. You'll see data within 10 minutes of your first purchase.
+            </p>
+          </div>
+        </div>
       </DashboardLayout>
     );
   }
@@ -201,9 +268,17 @@ export default function Dashboard() {
       <div className="space-y-8">
         {/* Header with controls */}
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
-          <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+            <p className="text-base text-gray-600 mt-1">
+              See exactly where your revenue comes from
+            </p>
+          </div>
           <div className="flex flex-col sm:flex-row gap-3">
-            <DateRangeSelector value={dateRange} onChange={setDateRange} />
+            <div className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg shadow-sm">
+              <span className="text-sm font-medium text-gray-700">Date Range:</span>
+              <DateRangeSelector value={dateRange} onChange={setDateRange} />
+            </div>
             <Button
               variant="secondary"
               onClick={handleExport}
@@ -215,18 +290,27 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {/* Quick Insights - Hero section with actionable summary */}
+        {sourceData.length > 0 && (
+          <QuickInsights
+            sources={sourceData}
+            totalRevenue={summaryData.totalRevenue}
+            revenueTrend={summaryData.trends.revenue}
+          />
+        )}
+
         {/* Hero Metrics Section */}
         <RevenueSummary data={summaryData} />
 
-        {/* Smart Recommendations */}
+        {/* Revenue by Source Table - Most important for attribution */}
+        <RevenueBySource data={sourceData} />
+
+        {/* Smart Recommendations - Contextual, supporting insights */}
         {recommendations.length > 0 && (
           <SmartRecommendations recommendations={recommendations} />
         )}
 
-        {/* Revenue by Source Table */}
-        <RevenueBySource data={sourceData} />
-
-        {/* Recent Purchases Feed */}
+        {/* Recent Purchases Feed - Supporting detail */}
         <RecentPurchases purchases={recentPurchases} />
       </div>
     </DashboardLayout>

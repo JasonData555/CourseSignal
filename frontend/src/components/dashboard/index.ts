@@ -5,3 +5,4 @@ export { RecentPurchases } from './RecentPurchases';
 export type { Purchase } from './RecentPurchases';
 export { SmartRecommendations } from './SmartRecommendations';
 export type { Recommendation } from './SmartRecommendations';
+export { QuickInsights } from './QuickInsights';

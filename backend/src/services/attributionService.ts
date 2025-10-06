@@ -85,8 +85,24 @@ export async function attributePurchase(
     ]
   );
 
+  const purchaseId = result.rows[0].id;
+
+  // Auto-assign to active launch if purchase falls within launch date range
+  await query(
+    `UPDATE purchases p
+     SET launch_id = l.id
+     FROM launches l
+     WHERE p.id = $1
+       AND l.user_id = $2
+       AND p.purchased_at BETWEEN l.start_date AND l.end_date
+       AND l.status IN ('active', 'completed')
+     ORDER BY l.start_date DESC
+     LIMIT 1`,
+    [purchaseId, userId]
+  );
+
   return {
-    purchaseId: result.rows[0].id,
+    purchaseId,
     status: attributionStatus,
     visitorId: visitor?.visitorId,
     firstTouch,

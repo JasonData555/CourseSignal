@@ -147,7 +147,12 @@ export function RevenueBySource({ data, onDrillDown }: RevenueBySourceProps) {
 
   return (
     <div>
-      <h2 className="text-xl font-bold text-gray-900 mb-4">Revenue by Source</h2>
+      <div className="mb-4">
+        <h2 className="text-xl font-bold text-gray-900">Revenue by Source</h2>
+        <p className="text-sm text-gray-600 mt-1">
+          See which traffic sources generate the most revenue. Click any column header to sort.
+        </p>
+      </div>
       <Table
         columns={columns}
         data={sortedData}

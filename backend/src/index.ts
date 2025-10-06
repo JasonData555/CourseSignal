@@ -6,9 +6,12 @@ import authRoutes from './routes/auth';
 import trackingRoutes from './routes/tracking';
 import scriptRoutes from './routes/script';
 import kajabiRoutes from './routes/kajabi';
+import teachableRoutes from './routes/teachable';
 import webhooksRoutes from './routes/webhooks';
 import analyticsRoutes from './routes/analytics';
+import launchesRoutes from './routes/launches';
 import { apiLimiter } from './middleware/rateLimit';
+import { startLaunchStatusUpdater } from './jobs/launchStatusUpdater';
 
 dotenv.config();
 
@@ -34,8 +37,10 @@ app.use('/api/auth', authRoutes);
 app.use('/api/tracking', trackingRoutes);
 app.use('/api/script', scriptRoutes);
 app.use('/api/kajabi', kajabiRoutes);
+app.use('/api/teachable', teachableRoutes);
 app.use('/api/webhooks', webhooksRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/launches', launchesRoutes);
 
 // Apply rate limiting to API routes
 app.use('/api', apiLimiter);
@@ -57,6 +62,9 @@ app.use((req, res) => {
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
+
+  // Start background jobs
+  startLaunchStatusUpdater();
 });
 
 export default app;

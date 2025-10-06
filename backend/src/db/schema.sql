@@ -158,3 +158,62 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
 
 CREATE INDEX idx_refresh_tokens_user_id ON refresh_tokens(user_id);
 CREATE INDEX idx_refresh_tokens_token ON refresh_tokens(token);
+
+-- Launches table for tracking time-limited course launches
+CREATE TABLE IF NOT EXISTS launches (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  title VARCHAR(255) NOT NULL,
+  description TEXT,
+  start_date TIMESTAMP NOT NULL,
+  end_date TIMESTAMP NOT NULL,
+  revenue_goal DECIMAL(10,2),
+  sales_goal INTEGER,
+  status VARCHAR(50) DEFAULT 'upcoming', -- upcoming, active, completed, archived
+
+  -- Sharing settings
+  share_enabled BOOLEAN DEFAULT FALSE,
+  share_token VARCHAR(255) UNIQUE,
+  share_password_hash VARCHAR(255),
+  share_expires_at TIMESTAMP,
+
+  -- Cached metrics (for completed launches to improve performance)
+  cached_revenue DECIMAL(10,2) DEFAULT 0,
+  cached_students INTEGER DEFAULT 0,
+  cached_conversion_rate DECIMAL(5,2) DEFAULT 0,
+  metrics_updated_at TIMESTAMP,
+
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+  -- Constraint: end_date must be after start_date
+  CONSTRAINT valid_date_range CHECK (end_date > start_date)
+);
+
+-- Indexes for launches table
+CREATE INDEX IF NOT EXISTS idx_launches_user_status ON launches(user_id, status);
+CREATE INDEX IF NOT EXISTS idx_launches_user_dates ON launches(user_id, start_date, end_date);
+CREATE INDEX IF NOT EXISTS idx_launches_share_token ON launches(share_token) WHERE share_enabled = TRUE;
+CREATE INDEX IF NOT EXISTS idx_launches_active ON launches(user_id, status, end_date) WHERE status = 'active';
+
+-- Add launch_id column to purchases table
+ALTER TABLE purchases ADD COLUMN IF NOT EXISTS launch_id UUID REFERENCES launches(id) ON DELETE SET NULL;
+
+-- Indexes for purchases launch relationship
+CREATE INDEX IF NOT EXISTS idx_purchases_launch_id ON purchases(launch_id);
+CREATE INDEX IF NOT EXISTS idx_purchases_launch_source ON purchases(launch_id, first_touch_source) WHERE launch_id IS NOT NULL;
+
+-- Launch views table for tracking public recap page views
+CREATE TABLE IF NOT EXISTS launch_views (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  launch_id UUID REFERENCES launches(id) ON DELETE CASCADE,
+  share_token VARCHAR(255),
+  viewed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  referrer TEXT,
+  user_agent TEXT
+);
+
+-- Indexes for launch_views table
+CREATE INDEX IF NOT EXISTS idx_launch_views_launch_id ON launch_views(launch_id);
+CREATE INDEX IF NOT EXISTS idx_launch_views_token ON launch_views(share_token);
+CREATE INDEX IF NOT EXISTS idx_launch_views_viewed_at ON launch_views(viewed_at);

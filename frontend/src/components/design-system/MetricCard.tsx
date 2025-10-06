@@ -1,6 +1,7 @@
-import { ReactNode } from 'react';
+import { ReactNode, cloneElement, isValidElement } from 'react';
 import { Card } from './Card';
 import { TrendingUp, TrendingDown } from 'lucide-react';
+import { clsx } from 'clsx';
 
 interface MetricCardProps {
   label: string;
@@ -47,40 +48,52 @@ export function MetricCard({
     <Card className={className}>
       <div className="flex items-start justify-between">
         <div className="flex-1">
-          <p className="text-sm text-gray-600 font-normal">{label}</p>
-          <p className="mt-2 text-4xl font-bold text-gray-900">{formatValue(value)}</p>
+          {/* Uppercase label with letter-spacing for professionalism */}
+          <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+            {label}
+          </p>
 
+          {/* Larger metric value - the hero */}
+          <p className="mt-1 text-metric-lg font-bold text-gray-900 tracking-tight">
+            {formatValue(value)}
+          </p>
+
+          {/* Trend indicator with pill background for emphasis */}
           {trend !== undefined && (
-            <div className="mt-2 flex items-center gap-1">
-              {trendPositive && (
-                <>
-                  <TrendingUp className="w-4 h-4 text-success-600" />
-                  <span className="text-sm font-medium text-success-600">
-                    ↑ {Math.abs(trend).toFixed(1)}%
-                  </span>
-                </>
-              )}
-              {trendNegative && (
-                <>
-                  <TrendingDown className="w-4 h-4 text-danger-600" />
-                  <span className="text-sm font-medium text-danger-600">
-                    ↓ {Math.abs(trend).toFixed(1)}%
-                  </span>
-                </>
-              )}
-              {trend === 0 && (
-                <span className="text-sm font-medium text-gray-500">—</span>
-              )}
+            <div className="mt-3 flex items-center gap-1.5">
+              <div className={clsx(
+                'inline-flex items-center gap-1 px-2 py-0.5 rounded-full',
+                trendPositive && 'bg-success-50',
+                trendNegative && 'bg-danger-50',
+                trend === 0 && 'bg-gray-100'
+              )}>
+                {trendPositive && <TrendingUp className="w-4 h-4 text-success-600" />}
+                {trendNegative && <TrendingDown className="w-4 h-4 text-danger-600" />}
+                <span className={clsx(
+                  'text-sm font-semibold',
+                  trendPositive && 'text-success-700',
+                  trendNegative && 'text-danger-700',
+                  trend === 0 && 'text-gray-600'
+                )}>
+                  {trend === 0 ? '—' : `${Math.abs(trend).toFixed(1)}%`}
+                </span>
+              </div>
               {trendLabel && (
-                <span className="text-sm text-gray-500 ml-1">{trendLabel}</span>
+                <span className="text-xs text-gray-500">{trendLabel}</span>
               )}
             </div>
           )}
         </div>
 
+        {/* Subtle icon that doesn't compete with data */}
         {icon && (
-          <div className="flex-shrink-0 p-3 bg-primary-50 rounded-lg">
-            {icon}
+          <div className="flex-shrink-0 w-10 h-10 flex items-center justify-center bg-gray-50 rounded-lg">
+            {isValidElement(icon)
+              ? cloneElement(icon as React.ReactElement, {
+                  className: 'w-5 h-5 text-gray-400'
+                })
+              : icon
+            }
           </div>
         )}
       </div>

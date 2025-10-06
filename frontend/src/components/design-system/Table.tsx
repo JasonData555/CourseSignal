@@ -48,25 +48,27 @@ export function Table<T extends Record<string, any>>({
 
   if (data.length === 0) {
     return (
-      <div className="bg-white rounded-card shadow-card p-12 text-center">
+      <div className="bg-white rounded-md shadow-card p-12 text-center">
         <p className="text-gray-500">{emptyMessage}</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-white rounded-card shadow-card overflow-hidden">
+    <div className="bg-white rounded-md shadow-card overflow-hidden">
       <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
+        <table className="min-w-full">
+          <thead>
+            <tr className="border-b border-gray-200">
               {columns.map((column) => (
                 <th
                   key={column.key}
                   className={clsx(
-                    'px-6 py-3 text-xs font-semibold text-gray-700 uppercase tracking-wider',
-                    getAlignClass(column.align),
-                    column.sortable && 'cursor-pointer hover:bg-gray-100 select-none'
+                    'px-6 py-3 text-left',
+                    'text-xs font-semibold text-gray-600 uppercase tracking-wider',
+                    'bg-gray-50',
+                    column.sortable && 'cursor-pointer hover:bg-gray-100 transition-colors duration-normal select-none',
+                    getAlignClass(column.align)
                   )}
                   onClick={() => handleSort(column.key, column.sortable)}
                 >
@@ -103,13 +105,13 @@ export function Table<T extends Record<string, any>>({
               ))}
             </tr>
           </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
+          <tbody className="bg-white">
             {data.map((row, rowIndex) => (
               <tr
                 key={rowIndex}
                 className={clsx(
-                  rowIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50',
-                  onRowClick && 'cursor-pointer hover:bg-primary-50 transition-colors'
+                  'border-b border-gray-100 transition-colors duration-normal',
+                  onRowClick && 'cursor-pointer hover:bg-gray-50'
                 )}
                 onClick={() => onRowClick?.(row)}
               >
@@ -117,7 +119,7 @@ export function Table<T extends Record<string, any>>({
                   <td
                     key={column.key}
                     className={clsx(
-                      'px-6 py-4 whitespace-nowrap text-sm',
+                      'px-6 py-4 text-sm text-gray-900',
                       getAlignClass(column.align)
                     )}
                   >

@@ -19,14 +19,21 @@ export function Button({
   className,
   ...props
 }: ButtonProps) {
-  const baseClasses = 'inline-flex items-center justify-center font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
+  const baseClasses = clsx(
+    'inline-flex items-center justify-center',
+    'font-medium rounded-lg',
+    'transition-all duration-normal', // Faster than 200ms
+    'focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500',
+    'active:scale-[0.98]', // Subtle press effect (Linear-style)
+    'disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100'
+  );
 
   const variantClasses = {
-    primary: 'bg-primary-600 text-white hover:bg-primary-700 focus:ring-primary-500',
-    secondary: 'bg-gray-200 text-gray-900 hover:bg-gray-300 focus:ring-gray-500',
-    danger: 'bg-danger-600 text-white hover:bg-danger-700 focus:ring-danger-500',
-    success: 'bg-success-600 text-white hover:bg-success-700 focus:ring-success-500',
-    ghost: 'text-gray-700 hover:bg-gray-100 focus:ring-gray-500',
+    primary: 'bg-primary-600 text-white hover:bg-primary-700 active:bg-primary-800 shadow-sm',
+    secondary: 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 active:bg-gray-100 shadow-sm',
+    danger: 'bg-danger-600 text-white hover:bg-danger-700 active:bg-danger-800 shadow-sm',
+    success: 'bg-success-600 text-white hover:bg-success-700 active:bg-success-800 shadow-sm',
+    ghost: 'text-gray-600 hover:bg-gray-100 active:bg-gray-200',
   };
 
   const sizeClasses = {

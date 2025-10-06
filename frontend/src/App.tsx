@@ -8,6 +8,11 @@ import Onboarding from './pages/Onboarding';
 import VerifyEmail from './pages/VerifyEmail';
 import Settings from './pages/Settings';
 import Account from './pages/Account';
+import Launches from './pages/Launches';
+import LaunchNew from './pages/LaunchNew';
+import LaunchDashboard from './pages/LaunchDashboard';
+import LaunchComparison from './pages/LaunchComparison';
+import PublicLaunchRecap from './pages/PublicLaunchRecap';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, loading } = useAuthStore();
@@ -67,6 +72,45 @@ function App() {
           </PrivateRoute>
         }
       />
+
+      <Route
+        path="/launches"
+        element={
+          <PrivateRoute>
+            <Launches />
+          </PrivateRoute>
+        }
+      />
+
+      <Route
+        path="/launches/new"
+        element={
+          <PrivateRoute>
+            <LaunchNew />
+          </PrivateRoute>
+        }
+      />
+
+      <Route
+        path="/launches/:id"
+        element={
+          <PrivateRoute>
+            <LaunchDashboard />
+          </PrivateRoute>
+        }
+      />
+
+      <Route
+        path="/launches/compare"
+        element={
+          <PrivateRoute>
+            <LaunchComparison />
+          </PrivateRoute>
+        }
+      />
+
+      {/* Public route - no auth required */}
+      <Route path="/public/launch/:shareToken" element={<PublicLaunchRecap />} />
 
       <Route path="/" element={<Navigate to="/dashboard" />} />
     </Routes>

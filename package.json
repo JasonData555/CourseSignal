@@ -9,13 +9,15 @@
     "tracking-script"
   ],
   "scripts": {
-    "dev:backend": "npm run dev --workspace=backend",
+    "dev:backend": "cd backend && DATABASE_URL=postgresql://localhost:5432/coursesignal npm run dev",
     "dev:frontend": "npm run dev --workspace=frontend",
     "dev:tracking": "npm run dev --workspace=tracking-script",
     "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\" --names \"backend,frontend\" --prefix-colors \"blue,green\"",
     "build": "npm run build --workspaces",
     "build:tracking": "npm run build --workspace=tracking-script",
     "migrate": "npm run migrate --workspace=backend",
+    "seed": "DATABASE_URL=postgresql://localhost:5432/coursesignal ts-node backend/src/db/seed.ts",
+    "clear-data": "DATABASE_URL=postgresql://localhost:5432/coursesignal ts-node backend/src/db/clear-data.ts",
     "test": "npm run test --workspaces"
   },
   "keywords": [
@@ -26,6 +28,8 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
+    "@types/node": "^24.7.0",
+    "@types/pg": "^8.15.5",
     "concurrently": "^9.2.1"
   }
 }

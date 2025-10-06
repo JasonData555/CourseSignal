@@ -32,7 +32,12 @@ export function RecentPurchases({ purchases }: RecentPurchasesProps) {
 
   return (
     <div>
-      <h2 className="text-xl font-bold text-gray-900 mb-4">Recent Purchases</h2>
+      <div className="mb-4">
+        <h2 className="text-xl font-bold text-gray-900">Recent Purchases</h2>
+        <p className="text-sm text-gray-600 mt-1">
+          Live feed of your latest sales with attribution data
+        </p>
+      </div>
       <Card padding="none">
         <div className="divide-y divide-gray-100">
           {purchases.map((purchase) => (

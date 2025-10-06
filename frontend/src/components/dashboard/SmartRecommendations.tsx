@@ -55,10 +55,15 @@ export function SmartRecommendations({ recommendations }: SmartRecommendationsPr
 
   return (
     <div>
-      <h2 className="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
-        <Lightbulb className="w-6 h-6 text-primary-600" />
-        Smart Recommendations
-      </h2>
+      <div className="mb-4">
+        <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+          <Lightbulb className="w-6 h-6 text-primary-600" />
+          Smart Recommendations
+        </h2>
+        <p className="text-sm text-gray-600 mt-1">
+          Actionable insights based on your revenue data
+        </p>
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {recommendations.map((rec) => (
           <Card

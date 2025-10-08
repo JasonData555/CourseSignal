@@ -1,9 +1,8 @@
 import { TrendingUp, TrendingDown, AlertCircle, Target } from 'lucide-react';
-import { Card } from '../design-system';
 
 export interface SourceData {
   source: string;
-  revenue: string;
+  revenue: number;
   visitors: number;
   students: number;
   conversionRate: string;
@@ -29,7 +28,7 @@ export function QuickInsights({ sources, totalRevenue, revenueTrend }: QuickInsi
 
   // Find highest revenue source
   const topRevenueSource = [...sources].sort(
-    (a, b) => parseFloat(b.revenue) - parseFloat(a.revenue)
+    (a, b) => b.revenue - a.revenue
   )[0];
 
   // Generate insight message
@@ -50,8 +49,7 @@ export function QuickInsights({ sources, totalRevenue, revenueTrend }: QuickInsi
     Icon = AlertCircle;
   } else if (parseFloat(topSource.conversionRate) > 5) {
     // High-performing channel
-    const topRevenue = parseFloat(topSource.revenue.replace(/[$,]/g, ''));
-    insightMessage = `${topSource.source} is your top performer with ${topSource.conversionRate}% conversion rate and $${topRevenue.toLocaleString()} in revenue. Consider investing more in this channel.`;
+    insightMessage = `${topSource.source} is your top performer with ${topSource.conversionRate}% conversion rate and $${topSource.revenue.toLocaleString()} in revenue. Consider investing more in this channel.`;
     insightType = 'success';
     Icon = TrendingUp;
   } else if (revenueTrend !== undefined && revenueTrend > 20) {
@@ -61,8 +59,7 @@ export function QuickInsights({ sources, totalRevenue, revenueTrend }: QuickInsi
     Icon = TrendingUp;
   } else {
     // Default insight - highest revenue source
-    const topRevenue = parseFloat(topRevenueSource.revenue.replace(/[$,]/g, ''));
-    insightMessage = `${topRevenueSource.source} is your top revenue channel with $${topRevenue.toLocaleString()} in sales. This represents ${((topRevenue / totalRevenue) * 100).toFixed(1)}% of your total revenue.`;
+    insightMessage = `${topRevenueSource.source} is your top revenue channel with $${topRevenueSource.revenue.toLocaleString()} in sales. This represents ${((topRevenueSource.revenue / totalRevenue) * 100).toFixed(1)}% of your total revenue.`;
     insightType = 'info';
     Icon = Target;
   }

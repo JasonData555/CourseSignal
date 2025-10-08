@@ -1,9 +1,11 @@
 import { useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './stores/authStore';
+import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
+import DemoDashboard from './pages/DemoDashboard';
 import Onboarding from './pages/Onboarding';
 import VerifyEmail from './pages/VerifyEmail';
 import Settings from './pages/Settings';
@@ -33,6 +35,10 @@ function App() {
 
   return (
     <Routes>
+      {/* Public landing page */}
+      <Route path="/" element={<Landing />} />
+
+      {/* Auth routes */}
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
       <Route path="/verify-email" element={<VerifyEmail />} />
@@ -109,10 +115,9 @@ function App() {
         }
       />
 
-      {/* Public route - no auth required */}
+      {/* Public routes - no auth required */}
       <Route path="/public/launch/:shareToken" element={<PublicLaunchRecap />} />
-
-      <Route path="/" element={<Navigate to="/dashboard" />} />
+      <Route path="/demo" element={<DemoDashboard />} />
     </Routes>
   );
 }

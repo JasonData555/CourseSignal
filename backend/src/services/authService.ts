@@ -1,4 +1,4 @@
-import bcrypt from 'bcryptjs';
+import bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
 import { query } from '../db/connection';
 import { generateAccessToken, generateRefreshToken, getRefreshTokenExpiry } from '../utils/jwt';

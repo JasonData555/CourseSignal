@@ -10,6 +10,7 @@ import teachableRoutes from './routes/teachable';
 import webhooksRoutes from './routes/webhooks';
 import analyticsRoutes from './routes/analytics';
 import launchesRoutes from './routes/launches';
+import publicRoutes from './routes/public';
 import { apiLimiter } from './middleware/rateLimit';
 import { startLaunchStatusUpdater } from './jobs/launchStatusUpdater';
 
@@ -41,6 +42,7 @@ app.use('/api/teachable', teachableRoutes);
 app.use('/api/webhooks', webhooksRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/launches', launchesRoutes);
+app.use('/api/public', publicRoutes);
 
 // Apply rate limiting to API routes
 app.use('/api', apiLimiter);

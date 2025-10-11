@@ -9,7 +9,12 @@ router.post('/kajabi/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
 
-    // TODO: Verify webhook signature
+    // Verify webhook signature
+    const signature = req.headers['x-kajabi-signature'] as string;
+    if (!kajabiService.verifyWebhookSignature(req.body, signature)) {
+      console.error('Invalid Kajabi webhook signature');
+      return res.status(401).json({ error: 'Invalid webhook signature' });
+    }
 
     await kajabiService.handleWebhook(userId, req.body);
 
@@ -25,7 +30,12 @@ router.post('/teachable/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
 
-    // TODO: Verify webhook signature
+    // Verify webhook signature
+    const signature = req.headers['x-teachable-signature'] as string;
+    if (!teachableService.verifyWebhookSignature(req.body, signature)) {
+      console.error('Invalid Teachable webhook signature');
+      return res.status(401).json({ error: 'Invalid webhook signature' });
+    }
 
     await teachableService.handleWebhook(userId, req.body);
 

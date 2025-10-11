@@ -1,0 +1,55 @@
+# Dependencies
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Environment files (NEVER include in image - security risk)
+.env
+.env.*
+!.env.example
+
+# TypeScript source (we only need compiled dist/)
+src/
+!src/db/migrations
+!src/db/schema.sql
+
+# TypeScript config
+tsconfig.json
+
+# Build output (will be generated in build stage)
+dist/
+
+# Tests
+__tests__/
+*.test.ts
+*.spec.ts
+coverage/
+jest.config.js
+
+# Development files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Documentation
+*.md
+!README.md
+
+# Logs
+logs/
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+tmp/
+temp/

@@ -4,7 +4,7 @@ import { query } from '../db/connection';
 export interface TrackingEvent {
   visitorId: string;
   sessionId: string;
-  eventType: 'visit' | 'pageview';
+  eventType: 'visit' | 'pageview' | 'identify';
   eventData: {
     source?: string;
     medium?: string;
@@ -14,6 +14,7 @@ export interface TrackingEvent {
     referrer?: string;
     landingPage?: string;
     deviceFingerprint?: string;
+    email?: string;
   };
 }
 
@@ -92,6 +93,26 @@ export async function createSession(
 }
 
 export async function recordTrackingEvent(userId: string, event: TrackingEvent) {
+  // Handle identify events specially
+  if (event.eventType === 'identify' && event.eventData.email) {
+    // Update visitor with email
+    await query(
+      `UPDATE visitors
+       SET email = $1, updated_at = NOW()
+       WHERE user_id = $2 AND visitor_id = $3`,
+      [event.eventData.email, userId, event.visitorId]
+    );
+
+    // Store the identify event
+    await query(
+      `INSERT INTO tracking_events (user_id, visitor_id, session_id, event_type, event_data)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [userId, event.visitorId, event.sessionId, event.eventType, JSON.stringify(event.eventData)]
+    );
+
+    return { success: true };
+  }
+
   // Create or update visitor
   const visitor = await createOrUpdateVisitor(userId, event.visitorId, event.eventData);
 
@@ -172,10 +193,10 @@ export async function findVisitorByFingerprint(
      FROM visitors
      WHERE user_id = $1
        AND device_fingerprint = $2
-       AND created_at > NOW() - INTERVAL '${withinHours} hours'
+       AND created_at > NOW() - ($3 || ' hours')::INTERVAL
      ORDER BY created_at DESC
      LIMIT 1`,
-    [userId, fingerprint]
+    [userId, fingerprint, withinHours.toString()]
   );
 
   if (result.rows.length === 0) {

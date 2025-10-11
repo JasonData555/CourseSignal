@@ -1,0 +1,63 @@
+# Dependencies
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Build output (will be generated in build stage)
+dist/
+
+# Source maps (not needed in production)
+*.map
+
+# Tests
+__tests__/
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+coverage/
+jest.config.js
+
+# Development files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Documentation
+*.md
+!README.md
+
+# Logs
+logs/
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# ESLint and Prettier
+.eslintrc.js
+.prettierrc
+.prettierignore
+
+# TypeScript config
+tsconfig.json
+tsconfig.node.json
+
+# Vite config (not needed in production image)
+vite.config.ts
+
+# Development server
+.vite/

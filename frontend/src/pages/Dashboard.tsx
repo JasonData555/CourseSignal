@@ -4,7 +4,6 @@ import {
   DateRangeSelector,
   DateRange,
   Button,
-  EmptyState,
   MetricCardSkeleton,
   TableSkeleton,
 } from '../components/design-system';
@@ -18,7 +17,7 @@ import {
   Purchase,
   Recommendation,
 } from '../components/dashboard';
-import { Download, Database } from 'lucide-react';
+import { Download, Database, Filter } from 'lucide-react';
 import api from '../lib/api';
 
 interface SummaryData {
@@ -35,6 +34,7 @@ interface SummaryData {
 
 export default function Dashboard() {
   const [dateRange, setDateRange] = useState<DateRange>('30d');
+  const [selectedSource, setSelectedSource] = useState<string>('all');
   const [loading, setLoading] = useState(true);
   const [summaryData, setSummaryData] = useState<SummaryData | null>(null);
   const [sourceData, setSourceData] = useState<SourceData[]>([]);
@@ -43,13 +43,16 @@ export default function Dashboard() {
 
   useEffect(() => {
     fetchDashboardData();
-  }, [dateRange]);
+  }, [dateRange, selectedSource]);
 
   const fetchDashboardData = async () => {
     setLoading(true);
     try {
+      // Build query params
+      const sourceParam = selectedSource !== 'all' ? `&source=${selectedSource}` : '';
+
       // Fetch summary
-      const summaryResponse = await api.get(`/analytics/summary?range=${dateRange}`);
+      const summaryResponse = await api.get(`/analytics/summary?range=${dateRange}${sourceParam}`);
       setSummaryData(summaryResponse.data);
 
       // Fetch revenue by source
@@ -297,6 +300,29 @@ export default function Dashboard() {
             totalRevenue={summaryData.totalRevenue}
             revenueTrend={summaryData.trends.revenue}
           />
+        )}
+
+        {/* Source Filter */}
+        {sourceData.length > 0 && (
+          <div className="flex items-center gap-3">
+            <Filter className="w-4 h-4 text-gray-500" />
+            <label htmlFor="source-filter" className="text-sm font-medium text-gray-700">
+              Filter by Source:
+            </label>
+            <select
+              id="source-filter"
+              value={selectedSource}
+              onChange={(e) => setSelectedSource(e.target.value)}
+              className="text-sm border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors min-w-[180px]"
+            >
+              <option value="all">All Sources</option>
+              {sourceData.map((source) => (
+                <option key={source.source} value={source.source}>
+                  {source.source.charAt(0).toUpperCase() + source.source.slice(1)}
+                </option>
+              ))}
+            </select>
+          </div>
         )}
 
         {/* Hero Metrics Section */}

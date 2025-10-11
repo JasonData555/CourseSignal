@@ -1,6 +1,8 @@
 export { RevenueSummary } from './RevenueSummary';
 export { RevenueBySource } from './RevenueBySource';
 export type { SourceData } from './RevenueBySource';
+export { AttributionCard } from './AttributionCard';
+export type { AttributionCardProps } from './AttributionCard';
 export { RecentPurchases } from './RecentPurchases';
 export type { Purchase } from './RecentPurchases';
 export { SmartRecommendations } from './SmartRecommendations';

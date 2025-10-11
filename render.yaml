@@ -1,0 +1,172 @@
+# =========================================
+# Render.com Deployment Configuration
+# =========================================
+# This file defines all services for deploying CourseSignal on Render.
+# Docs: https://render.com/docs/blueprint-spec
+
+services:
+  # =========================================
+  # Backend API Service
+  # =========================================
+  - type: web
+    name: coursesignal-backend
+    env: node
+    region: oregon # Choose: oregon, frankfurt, singapore
+    plan: starter # Options: starter, standard, pro
+    buildCommand: cd backend && npm ci && npm run build
+    startCommand: cd backend && npm start
+    healthCheckPath: /health
+    autoDeploy: true
+
+    # Environment variables
+    envVars:
+      - key: NODE_ENV
+        value: production
+
+      - key: PORT
+        value: 3002
+
+      # Database (automatically set by Render when linked)
+      - key: DATABASE_URL
+        fromDatabase:
+          name: coursesignal-postgres
+          property: connectionString
+
+      # Redis (automatically set by Render when linked)
+      - key: REDIS_URL
+        fromService:
+          name: coursesignal-redis
+          type: redis
+          property: connectionString
+
+      # Security secrets (set these in Render dashboard)
+      - key: JWT_SECRET
+        sync: false # Must be set manually in Render dashboard
+
+      - key: ENCRYPTION_KEY
+        sync: false
+
+      # OAuth - Kajabi
+      - key: KAJABI_CLIENT_ID
+        sync: false
+
+      - key: KAJABI_CLIENT_SECRET
+        sync: false
+
+      # OAuth - Teachable
+      - key: TEACHABLE_CLIENT_ID
+        sync: false
+
+      - key: TEACHABLE_CLIENT_SECRET
+        sync: false
+
+      # Email
+      - key: SENDGRID_API_KEY
+        sync: false
+
+      - key: FROM_EMAIL
+        value: noreply@coursesignal.com
+
+      # Stripe
+      - key: STRIPE_SECRET_KEY
+        sync: false
+
+      - key: STRIPE_WEBHOOK_SECRET
+        sync: false
+
+      # Frontend URL (update after deploying frontend)
+      - key: APP_URL
+        value: https://coursesignal-frontend.onrender.com
+
+  # =========================================
+  # Frontend Static Site
+  # =========================================
+  - type: web
+    name: coursesignal-frontend
+    env: static
+    region: oregon
+    buildCommand: cd frontend && npm ci && npm run build
+    staticPublishPath: ./frontend/dist
+
+    # Custom headers for security and caching
+    headers:
+      - path: /*
+        name: X-Frame-Options
+        value: SAMEORIGIN
+
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+
+      - path: /*
+        name: X-XSS-Protection
+        value: 1; mode=block
+
+      # Cache static assets
+      - path: /assets/*
+        name: Cache-Control
+        value: public, max-age=31536000, immutable
+
+    # Routes for SPA (client-side routing)
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+
+    envVars:
+      - key: VITE_API_URL
+        value: https://coursesignal-backend.onrender.com/api
+
+# =========================================
+# Databases
+# =========================================
+databases:
+  # PostgreSQL Database
+  - name: coursesignal-postgres
+    databaseName: coursesignal
+    plan: starter # Options: starter, standard, pro
+    region: oregon
+
+    # Automatic backups (available on paid plans)
+    # ipAllowList: [] # Restrict access by IP (optional)
+
+# =========================================
+# Redis Instance
+# =========================================
+# Note: Render Redis is available on paid plans only
+# For free tier, use external Redis (Upstash, Redis Labs)
+# - type: redis
+#   name: coursesignal-redis
+#   plan: starter
+#   region: oregon
+#   maxmemoryPolicy: noeviction
+
+# =========================================
+# DEPLOYMENT INSTRUCTIONS
+# =========================================
+# 1. Push this file to your Git repository (GitHub, GitLab, etc.)
+# 2. Connect your repository to Render: https://dashboard.render.com/
+# 3. Create a new Blueprint and select your repository
+# 4. Render will automatically detect render.yaml and provision all services
+# 5. Set secret environment variables in Render dashboard (marked sync: false)
+# 6. Trigger deploy or push to main branch
+#
+# IMPORTANT: Set these secrets in Render dashboard before deploying:
+#   - JWT_SECRET (generate: node -e "console.log(require('crypto').randomBytes(64).toString('hex'))")
+#   - ENCRYPTION_KEY (generate: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))")
+#   - KAJABI_CLIENT_ID and KAJABI_CLIENT_SECRET
+#   - TEACHABLE_CLIENT_ID and TEACHABLE_CLIENT_SECRET
+#   - SENDGRID_API_KEY
+#   - STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET
+#
+# DATABASE MIGRATIONS:
+#   After first deploy, run migrations manually:
+#   1. Go to backend service in Render dashboard
+#   2. Open Shell tab
+#   3. Run: npm run migrate
+#
+# REDIS (Free Tier Workaround):
+#   If using free tier without Render Redis:
+#   1. Sign up for Upstash Redis: https://upstash.com/
+#   2. Create a Redis database and get connection URL
+#   3. Set REDIS_URL env var in backend service

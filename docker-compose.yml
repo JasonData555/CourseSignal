@@ -1,0 +1,158 @@
+# =========================================
+# CourseSignal Docker Compose Configuration
+# =========================================
+# This file orchestrates all services for local development and testing.
+# For production, use a managed database and Redis service instead.
+
+version: '3.8'
+
+services:
+  # =========================================
+  # PostgreSQL Database
+  # =========================================
+  postgres:
+    image: postgres:15-alpine
+    container_name: coursesignal-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: coursesignal
+      POSTGRES_USER: coursesignal
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
+    ports:
+      - "5432:5432"
+    volumes:
+      # Persistent data storage
+      - postgres_data:/var/lib/postgresql/data
+      # Initialize database with schema (optional)
+      - ./backend/src/db/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U coursesignal"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - coursesignal-network
+
+  # =========================================
+  # Redis (for Bull job queue and caching)
+  # =========================================
+  redis:
+    image: redis:7-alpine
+    container_name: coursesignal-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - coursesignal-network
+
+  # =========================================
+  # Backend API
+  # =========================================
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: coursesignal-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      # Database
+      DATABASE_URL: postgresql://coursesignal:${DB_PASSWORD:-changeme}@postgres:5432/coursesignal
+
+      # Redis
+      REDIS_URL: redis://redis:6379
+
+      # Application
+      NODE_ENV: production
+      PORT: 3002
+
+      # Security
+      JWT_SECRET: ${JWT_SECRET}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+
+      # OAuth - Kajabi
+      KAJABI_CLIENT_ID: ${KAJABI_CLIENT_ID}
+      KAJABI_CLIENT_SECRET: ${KAJABI_CLIENT_SECRET}
+
+      # OAuth - Teachable
+      TEACHABLE_CLIENT_ID: ${TEACHABLE_CLIENT_ID}
+      TEACHABLE_CLIENT_SECRET: ${TEACHABLE_CLIENT_SECRET}
+
+      # Email (SendGrid)
+      SENDGRID_API_KEY: ${SENDGRID_API_KEY}
+      FROM_EMAIL: ${FROM_EMAIL:-noreply@coursesignal.com}
+
+      # Stripe
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
+
+      # Frontend URL (for OAuth callbacks)
+      APP_URL: ${APP_URL:-http://localhost:5173}
+    ports:
+      - "3002:3002"
+    volumes:
+      # For development: mount source code for hot reload
+      # Comment out for production
+      - ./backend/src:/app/src:ro
+      - ./backend/dist:/app/dist
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3002/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      interval: 30s
+      timeout: 10s
+      start_period: 40s
+      retries: 3
+    networks:
+      - coursesignal-network
+
+  # =========================================
+  # Frontend (React + Vite + Nginx)
+  # =========================================
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: coursesignal-frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:3002/api}
+    ports:
+      - "80:80"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80/"]
+      interval: 30s
+      timeout: 3s
+      start_period: 5s
+      retries: 3
+    networks:
+      - coursesignal-network
+
+# =========================================
+# Networks
+# =========================================
+networks:
+  coursesignal-network:
+    driver: bridge
+
+# =========================================
+# Volumes (Persistent Data)
+# =========================================
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local

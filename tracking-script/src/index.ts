@@ -185,8 +185,40 @@ class CourseSignalTracker {
   }
 
   // Public API
-  public identify(email: string) {
+  public async identify(email: string) {
+    if (!email || !email.includes('@')) {
+      console.warn('Invalid email provided to identify()');
+      return;
+    }
+
+    // Store locally
     localStorage.setItem('cs_visitor_email', email);
+
+    // Send to backend to update visitor record
+    if (!this.apiUrl || !this.scriptId || !this.visitorId) {
+      console.warn('CourseSignal not initialized. Call init() first.');
+      return;
+    }
+
+    try {
+      await fetch(this.apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          scriptId: this.scriptId,
+          visitorId: this.visitorId,
+          sessionId: this.sessionId,
+          eventType: 'identify',
+          eventData: {
+            email,
+          },
+        }),
+      });
+    } catch (error) {
+      console.warn('Failed to send identify event:', error);
+    }
   }
 
   public getVisitorId(): string | null {

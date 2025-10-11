@@ -1,14 +1,16 @@
 import { Link, useLocation } from 'react-router-dom';
-import { BarChart3, Settings, User, LogOut, Rocket } from 'lucide-react';
+import { BarChart3, Settings, User, LogOut, Rocket, Link as LinkIcon } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useAuthStore } from '../../stores/authStore';
 import { useState, useEffect } from 'react';
 import api from '../../lib/api';
+import { UTMBuilder } from '../tools/UTMBuilder';
 
 export function Navigation() {
   const location = useLocation();
   const { logout, user } = useAuthStore();
   const [activeLaunchCount, setActiveLaunchCount] = useState<number>(0);
+  const [showUTMBuilder, setShowUTMBuilder] = useState(false);
 
   useEffect(() => {
     // Fetch active launch count
@@ -98,6 +100,16 @@ export function Navigation() {
               );
             })}
 
+            {/* Build Link Button */}
+            <button
+              onClick={() => setShowUTMBuilder(true)}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium bg-primary-600 text-white hover:bg-primary-700 transition-colors duration-normal shadow-sm"
+              title="Build tracking link"
+            >
+              <LinkIcon className="w-4 h-4" />
+              <span className="hidden sm:inline">Build Link</span>
+            </button>
+
             {/* User Menu */}
             <div className="ml-4 pl-4 border-l border-gray-200 flex items-center gap-3">
               {user && (
@@ -117,6 +129,12 @@ export function Navigation() {
           </div>
         </div>
       </div>
+
+      {/* UTM Builder Drawer */}
+      <UTMBuilder
+        isOpen={showUTMBuilder}
+        onClose={() => setShowUTMBuilder(false)}
+      />
     </nav>
   );
 }

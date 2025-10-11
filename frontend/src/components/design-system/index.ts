@@ -15,3 +15,6 @@ export type { BadgeVariant } from './Badge';
 export { ProgressBar } from './ProgressBar';
 export { Divider } from './Divider';
 export { Breadcrumbs } from './Breadcrumbs';
+export { Drawer } from './Drawer';
+export { Combobox } from './Combobox';
+export { QRCodeModal } from './QRCodeModal';

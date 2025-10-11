@@ -406,6 +406,155 @@ export default function Settings() {
             </div>
           </Card>
 
+          {/* Email Capture API */}
+          <Card>
+            <h2 className="text-xl font-bold text-gray-900 mb-4">Email Capture API</h2>
+
+            <p className="text-sm text-gray-600 mb-4">
+              Improve your attribution match rate by capturing visitor emails <strong>before</strong> they purchase.
+              Add this simple JavaScript call to your opt-in forms, email signup widgets, or lead magnets.
+            </p>
+
+            <div className="p-4 bg-warning-50 border border-warning-200 rounded-lg mb-6">
+              <p className="text-sm text-warning-900">
+                <strong>Why this matters:</strong> ~15% of purchases can't be attributed because we never captured
+                the visitor's email. By calling <code className="bg-warning-100 px-1 py-0.5 rounded">identify()</code> when
+                someone fills out a form, you'll match 95%+ of your sales to their traffic source.
+              </p>
+            </div>
+
+            {/* Usage Example */}
+            <div className="mb-6">
+              <h3 className="text-sm font-semibold text-gray-900 mb-2">How to use</h3>
+              <p className="text-sm text-gray-600 mb-3">
+                Call this method whenever a visitor provides their email (lead magnet, newsletter signup, pre-checkout form):
+              </p>
+              <div className="relative">
+                <pre className="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto text-sm">
+                  <code>{`// When user submits a form with their email
+window.CourseSignal.identify('user@example.com');`}</code>
+                </pre>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(`window.CourseSignal.identify('user@example.com');`);
+                    // Could add a separate copied state here
+                  }}
+                  className="absolute top-2 right-2 p-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+                >
+                  <Copy className="w-5 h-5 text-gray-400" />
+                </button>
+              </div>
+            </div>
+
+            {/* Platform-Specific Examples */}
+            <div className="mb-6">
+              <h3 className="text-sm font-semibold text-gray-900 mb-3">
+                Integration Examples
+              </h3>
+
+              <div className="space-y-4">
+                {/* Kajabi Example */}
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <p className="text-sm font-medium text-gray-900 mb-2">Kajabi Forms</p>
+                  <p className="text-xs text-gray-600 mb-3">
+                    Add this code to your Kajabi form's custom code section (Forms → Form Settings → Advanced → Custom Code):
+                  </p>
+                  <pre className="bg-gray-900 text-gray-100 p-3 rounded text-xs overflow-x-auto">
+                    <code>{`<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    var form = document.querySelector('.kajabi-form');
+    form.addEventListener('submit', function(e) {
+      var emailInput = form.querySelector('input[type="email"]');
+      if (emailInput && window.CourseSignal) {
+        window.CourseSignal.identify(emailInput.value);
+      }
+    });
+  });
+</script>`}</code>
+                  </pre>
+                </div>
+
+                {/* Teachable Example */}
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <p className="text-sm font-medium text-gray-900 mb-2">Teachable Custom Forms</p>
+                  <p className="text-xs text-gray-600 mb-3">
+                    Add this to your custom landing page or use with Teachable's built-in email capture:
+                  </p>
+                  <pre className="bg-gray-900 text-gray-100 p-3 rounded text-xs overflow-x-auto">
+                    <code>{`<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    var form = document.querySelector('#email-signup-form');
+    form.addEventListener('submit', function(e) {
+      var email = document.querySelector('#email').value;
+      if (window.CourseSignal) {
+        window.CourseSignal.identify(email);
+      }
+    });
+  });
+</script>`}</code>
+                  </pre>
+                </div>
+
+                {/* ConvertKit/Email Service Example */}
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <p className="text-sm font-medium text-gray-900 mb-2">ConvertKit / Email Service Providers</p>
+                  <p className="text-xs text-gray-600 mb-3">
+                    If you use ConvertKit, Mailchimp, or another email service, add this after their embed code:
+                  </p>
+                  <pre className="bg-gray-900 text-gray-100 p-3 rounded text-xs overflow-x-auto">
+                    <code>{`<script>
+  // For ConvertKit forms
+  document.addEventListener('DOMContentLoaded', function() {
+    var form = document.querySelector('.formkit-form');
+    form.addEventListener('submit', function(e) {
+      var emailInput = form.querySelector('input[name="email_address"]');
+      if (emailInput && window.CourseSignal) {
+        window.CourseSignal.identify(emailInput.value);
+      }
+    });
+  });
+</script>`}</code>
+                  </pre>
+                </div>
+
+                {/* Generic HTML Form Example */}
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <p className="text-sm font-medium text-gray-900 mb-2">Generic HTML Form</p>
+                  <p className="text-xs text-gray-600 mb-3">
+                    For any custom HTML form on your site:
+                  </p>
+                  <pre className="bg-gray-900 text-gray-100 p-3 rounded text-xs overflow-x-auto">
+                    <code>{`<form id="lead-magnet-form">
+  <input type="email" id="email" required>
+  <button type="submit">Get Free Guide</button>
+</form>
+
+<script>
+  document.getElementById('lead-magnet-form').addEventListener('submit', function(e) {
+    var email = document.getElementById('email').value;
+    if (window.CourseSignal) {
+      window.CourseSignal.identify(email);
+    }
+  });
+</script>`}</code>
+                  </pre>
+                </div>
+              </div>
+            </div>
+
+            {/* Best Practices */}
+            <div className="p-4 bg-primary-50 border border-primary-200 rounded-lg">
+              <h3 className="text-sm font-semibold text-primary-900 mb-2">Best Practices</h3>
+              <ul className="space-y-1 text-xs text-primary-900">
+                <li>• Call <code className="bg-primary-100 px-1 py-0.5 rounded">identify()</code> on form submit, not on page load</li>
+                <li>• Check that <code className="bg-primary-100 px-1 py-0.5 rounded">window.CourseSignal</code> exists before calling (in case script hasn't loaded yet)</li>
+                <li>• Add to ALL email capture points: lead magnets, webinar signups, newsletter forms, etc.</li>
+                <li>• The email is automatically linked to the visitor's UTM parameters and session data</li>
+                <li>• When they purchase later (even on a different device), we'll match by email</li>
+              </ul>
+            </div>
+          </Card>
+
           {/* Site Information */}
           <Card>
             <h2 className="text-xl font-bold text-gray-900 mb-4">Site Information</h2>

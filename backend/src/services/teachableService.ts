@@ -1,4 +1,5 @@
 import axios from 'axios';
+import crypto from 'crypto';
 import { query } from '../db/connection';
 import { encrypt, decrypt } from '../utils/encryption';
 import * as attributionService from './attributionService';
@@ -7,6 +8,7 @@ const TEACHABLE_API_BASE = 'https://api.teachable.com';
 const TEACHABLE_CLIENT_ID = process.env.TEACHABLE_CLIENT_ID;
 const TEACHABLE_CLIENT_SECRET = process.env.TEACHABLE_CLIENT_SECRET;
 const TEACHABLE_REDIRECT_URI = process.env.TEACHABLE_REDIRECT_URI;
+const TEACHABLE_WEBHOOK_SECRET = process.env.TEACHABLE_WEBHOOK_SECRET;
 
 export function getOAuthUrl(state: string): string {
   const params = new URLSearchParams({
@@ -213,6 +215,44 @@ export async function syncPurchases(userId: string) {
   }
 }
 
+/**
+ * Verify webhook signature from Teachable
+ * @param payload - Raw webhook payload (string or object)
+ * @param signature - Signature from X-Teachable-Signature header
+ * @returns true if signature is valid, false otherwise
+ */
+export function verifyWebhookSignature(payload: string | any, signature: string | undefined): boolean {
+  if (!TEACHABLE_WEBHOOK_SECRET) {
+    console.error('TEACHABLE_WEBHOOK_SECRET not configured - webhook verification disabled');
+    return false;
+  }
+
+  if (!signature) {
+    console.error('Missing webhook signature');
+    return false;
+  }
+
+  try {
+    // Convert payload to string if it's an object
+    const payloadString = typeof payload === 'string' ? payload : JSON.stringify(payload);
+
+    // Generate HMAC SHA-256 signature
+    const expectedSignature = crypto
+      .createHmac('sha256', TEACHABLE_WEBHOOK_SECRET)
+      .update(payloadString)
+      .digest('hex');
+
+    // Use timing-safe comparison to prevent timing attacks
+    return crypto.timingSafeEqual(
+      Buffer.from(signature),
+      Buffer.from(expectedSignature)
+    );
+  } catch (error) {
+    console.error('Error verifying webhook signature:', error);
+    return false;
+  }
+}
+
 export async function handleWebhook(userId: string, event: any) {
   const { event_type, data } = event;
 
@@ -240,6 +280,9 @@ export async function handleWebhook(userId: string, event: any) {
       }
     }
 
+    // Note: Teachable webhooks don't include device fingerprint data
+    // Attribution relies primarily on email matching
+    // Fingerprint fallback only works if purchase came through our own checkout
     await attributionService.attributePurchase(userId, {
       email: orderData.email,
       amount: parseFloat(orderData.total) || 0,
@@ -248,6 +291,7 @@ export async function handleWebhook(userId: string, event: any) {
       platform: 'teachable',
       platformPurchaseId: orderData.id.toString(),
       purchasedAt: new Date(orderData.created_at),
+      deviceFingerprint: undefined, // Not available from Teachable webhooks
     });
   } else if (event_type === 'order.refunded') {
     // Mark purchase as refunded

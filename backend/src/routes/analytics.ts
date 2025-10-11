@@ -32,9 +32,10 @@ function parseDateRange(range: string) {
 router.get('/summary', authenticate, async (req: AuthRequest, res: Response) => {
   try {
     const range = (req.query.range as string) || '30d';
+    const source = req.query.source as string | undefined;
     const dateRange = parseDateRange(range);
 
-    const summary = await analyticsService.getDashboardSummary(req.user!.userId, dateRange);
+    const summary = await analyticsService.getDashboardSummary(req.user!.userId, dateRange, source);
 
     res.json(summary);
   } catch (error) {

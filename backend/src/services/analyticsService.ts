@@ -5,8 +5,17 @@ export interface DateRange {
   endDate: Date;
 }
 
-export async function getDashboardSummary(userId: string, dateRange: DateRange) {
+export async function getDashboardSummary(userId: string, dateRange: DateRange, source?: string) {
   const { startDate, endDate } = dateRange;
+
+  // Build query parameters
+  const params: any[] = [userId, startDate, endDate];
+  let sourceFilter = '';
+
+  if (source && source !== 'all') {
+    sourceFilter = 'AND first_touch_source = $4';
+    params.push(source);
+  }
 
   // Get current period stats
   const currentResult = await query(
@@ -18,8 +27,9 @@ export async function getDashboardSummary(userId: string, dateRange: DateRange) 
     FROM purchases
     WHERE user_id = $1
       AND purchased_at >= $2
-      AND purchased_at <= $3`,
-    [userId, startDate, endDate]
+      AND purchased_at <= $3
+      ${sourceFilter}`,
+    params
   );
 
   const current = currentResult.rows[0];
@@ -29,6 +39,11 @@ export async function getDashboardSummary(userId: string, dateRange: DateRange) 
   const prevStartDate = new Date(startDate.getTime() - periodDiff);
   const prevEndDate = new Date(startDate.getTime() - 1);
 
+  const prevParams: any[] = [userId, prevStartDate, prevEndDate];
+  if (source && source !== 'all') {
+    prevParams.push(source);
+  }
+
   const previousResult = await query(
     `SELECT
       COALESCE(SUM(amount), 0) as total_revenue,
@@ -37,8 +52,9 @@ export async function getDashboardSummary(userId: string, dateRange: DateRange) 
     FROM purchases
     WHERE user_id = $1
       AND purchased_at >= $2
-      AND purchased_at <= $3`,
-    [userId, prevStartDate, prevEndDate]
+      AND purchased_at <= $3
+      ${sourceFilter}`,
+    prevParams
   );
 
   const previous = previousResult.rows[0];

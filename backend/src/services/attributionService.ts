@@ -9,6 +9,7 @@ export interface Purchase {
   platform: 'kajabi' | 'teachable' | 'stripe';
   platformPurchaseId: string;
   purchasedAt: Date;
+  deviceFingerprint?: string;
 }
 
 export interface AttributionResult {
@@ -23,15 +24,17 @@ export async function attributePurchase(
   userId: string,
   purchase: Purchase
 ): Promise<AttributionResult> {
-  // Try to match by email first
+  // Try to match by email first (primary method)
   let visitor = await trackingService.findVisitorByEmail(userId, purchase.email);
 
   let attributionStatus: 'matched' | 'unmatched' | 'pending' = 'unmatched';
   let firstTouch: any = null;
   let lastTouch: any = null;
+  let matchMethod = 'none';
 
   if (visitor) {
     attributionStatus = 'matched';
+    matchMethod = 'email';
 
     // Get first touch attribution
     firstTouch = visitor.firstTouchData;
@@ -53,6 +56,41 @@ export async function attributePurchase(
       };
     } else {
       lastTouch = firstTouch; // Fallback to first touch if no sessions
+    }
+  }
+
+  // If email match failed and we have a device fingerprint, try fingerprint matching
+  // This catches cases where visitor used a different email at purchase, or multi-device journeys
+  if (!visitor && purchase.deviceFingerprint) {
+    visitor = await trackingService.findVisitorByFingerprint(
+      userId,
+      purchase.deviceFingerprint,
+      24 // Match within 24 hours
+    );
+
+    if (visitor) {
+      attributionStatus = 'matched';
+      matchMethod = 'fingerprint';
+
+      // Get attribution data
+      firstTouch = visitor.firstTouchData;
+      const sessions = await trackingService.getVisitorSessions(visitor.id);
+
+      if (sessions.length > 0) {
+        const lastSession = sessions[sessions.length - 1];
+        lastTouch = {
+          source: lastSession.source,
+          medium: lastSession.medium,
+          campaign: lastSession.campaign,
+          content: lastSession.content,
+          term: lastSession.term,
+          referrer: lastSession.referrer,
+          landingPage: lastSession.landing_page,
+          timestamp: lastSession.timestamp,
+        };
+      } else {
+        lastTouch = firstTouch;
+      }
     }
   }
 

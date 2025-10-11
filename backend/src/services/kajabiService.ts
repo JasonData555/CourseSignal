@@ -1,4 +1,5 @@
 import axios from 'axios';
+import crypto from 'crypto';
 import { query } from '../db/connection';
 import { encrypt, decrypt } from '../utils/encryption';
 import * as attributionService from './attributionService';
@@ -7,6 +8,7 @@ const KAJABI_API_BASE = 'https://api.kajabi.com';
 const KAJABI_CLIENT_ID = process.env.KAJABI_CLIENT_ID;
 const KAJABI_CLIENT_SECRET = process.env.KAJABI_CLIENT_SECRET;
 const KAJABI_REDIRECT_URI = process.env.KAJABI_REDIRECT_URI;
+const KAJABI_WEBHOOK_SECRET = process.env.KAJABI_WEBHOOK_SECRET;
 
 export function getOAuthUrl(state: string): string {
   const params = new URLSearchParams({
@@ -208,10 +210,51 @@ export async function syncPurchases(userId: string) {
   }
 }
 
+/**
+ * Verify webhook signature from Kajabi
+ * @param payload - Raw webhook payload (string or object)
+ * @param signature - Signature from X-Kajabi-Signature header
+ * @returns true if signature is valid, false otherwise
+ */
+export function verifyWebhookSignature(payload: string | any, signature: string | undefined): boolean {
+  if (!KAJABI_WEBHOOK_SECRET) {
+    console.error('KAJABI_WEBHOOK_SECRET not configured - webhook verification disabled');
+    return false;
+  }
+
+  if (!signature) {
+    console.error('Missing webhook signature');
+    return false;
+  }
+
+  try {
+    // Convert payload to string if it's an object
+    const payloadString = typeof payload === 'string' ? payload : JSON.stringify(payload);
+
+    // Generate HMAC SHA-256 signature
+    const expectedSignature = crypto
+      .createHmac('sha256', KAJABI_WEBHOOK_SECRET)
+      .update(payloadString)
+      .digest('hex');
+
+    // Use timing-safe comparison to prevent timing attacks
+    return crypto.timingSafeEqual(
+      Buffer.from(signature),
+      Buffer.from(expectedSignature)
+    );
+  } catch (error) {
+    console.error('Error verifying webhook signature:', error);
+    return false;
+  }
+}
+
 export async function handleWebhook(userId: string, event: any) {
   const { event_type, data } = event;
 
   if (event_type === 'offer.purchased') {
+    // Note: Kajabi webhooks don't include device fingerprint data
+    // Attribution relies primarily on email matching
+    // Fingerprint fallback only works if purchase came through our own checkout
     await attributionService.attributePurchase(userId, {
       email: data.customer_email,
       amount: data.amount / 100,
@@ -220,6 +263,7 @@ export async function handleWebhook(userId: string, event: any) {
       platform: 'kajabi',
       platformPurchaseId: data.id,
       purchasedAt: new Date(data.created_at),
+      deviceFingerprint: undefined, // Not available from Kajabi webhooks
     });
   } else if (event_type === 'offer.refunded') {
     // Mark purchase as refunded

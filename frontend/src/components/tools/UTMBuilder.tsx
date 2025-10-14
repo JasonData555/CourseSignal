@@ -15,15 +15,15 @@ interface PlatformPreset {
 }
 
 const PLATFORM_PRESETS: PlatformPreset[] = [
-  { label: 'Facebook Ads', source: 'facebook', medium: 'cpc' },
+  { label: 'Kajabi Course', source: 'kajabi', medium: 'course-platform' },
+  { label: 'Teachable Course', source: 'teachable', medium: 'course-platform' },
+  { label: 'Skool Community', source: 'skool', medium: 'course-platform' },
   { label: 'Instagram Ads', source: 'instagram', medium: 'cpc' },
-  { label: 'Google Ads', source: 'google', medium: 'cpc' },
   { label: 'YouTube Ads', source: 'youtube', medium: 'video' },
   { label: 'Email Newsletter', source: 'newsletter', medium: 'email' },
-  { label: 'LinkedIn Ads', source: 'linkedin', medium: 'cpc' },
 ];
 
-const COMMON_SOURCES = ['facebook', 'instagram', 'google', 'youtube', 'newsletter', 'linkedin', 'twitter', 'tiktok', 'affiliate', 'podcast'];
+const COMMON_SOURCES = ['kajabi', 'teachable', 'skool', 'instagram', 'youtube', 'newsletter', 'facebook', 'twitter', 'tiktok', 'affiliate', 'podcast'];
 const COMMON_MEDIUMS = ['cpc', 'social', 'email', 'video', 'referral', 'organic', 'affiliate'];
 
 export function UTMBuilder({ isOpen, onClose }: UTMBuilderProps) {

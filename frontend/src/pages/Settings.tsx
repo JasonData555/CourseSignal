@@ -4,20 +4,26 @@ import { Card, Button } from '../components/design-system';
 import { Copy, CheckCircle, XCircle, RefreshCw, ExternalLink } from 'lucide-react';
 import api from '../lib/api';
 
-type Platform = 'kajabi' | 'teachable';
+type Platform = 'kajabi' | 'teachable' | 'skool';
 
 export default function Settings() {
   const [selectedPlatform, setSelectedPlatform] = useState<Platform>('kajabi');
   const [kajabiConnected, setKajabiConnected] = useState(false);
   const [teachableConnected, setTeachableConnected] = useState(false);
-  const [kajabiApiKey, setKajabiApiKey] = useState('');
+  const [skoolConnected, setSkoolConnected] = useState(false);
+  const [skoolApiKey, setSkoolApiKey] = useState('');
+  const [skoolWebhookUrl, setSkoolWebhookUrl] = useState('');
   const [connecting, setConnecting] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [siteId, setSiteId] = useState('');
+  const [scriptUrl, setScriptUrl] = useState('');
   const [copied, setCopied] = useState(false);
   const [showInstructions, setShowInstructions] = useState(false);
+  const [aiEnabled, setAiEnabled] = useState(true);
+  const [aiAvailable, setAiAvailable] = useState(false);
+  const [updatingAiPref, setUpdatingAiPref] = useState(false);
 
   useEffect(() => {
     fetchSettings();
@@ -31,30 +37,36 @@ export default function Settings() {
       const teachableResponse = await api.get('/teachable/status');
       setTeachableConnected(teachableResponse.data.connected);
 
-      setSiteId('SITE_ID_PLACEHOLDER'); // TODO: Fetch from user settings
+      const skoolResponse = await api.get('/skool/status');
+      setSkoolConnected(skoolResponse.data.connected);
+      if (skoolResponse.data.webhookUrl) {
+        setSkoolWebhookUrl(skoolResponse.data.webhookUrl);
+      }
+
+      // Fetch AI preferences
+      const aiPrefResponse = await api.get('/recommendations/preference');
+      setAiEnabled(aiPrefResponse.data.aiEnabled);
+      setAiAvailable(aiPrefResponse.data.available);
+
+      // Fetch tracking script info
+      const scriptResponse = await api.get('/script/info');
+      setSiteId(scriptResponse.data.scriptId);
+      setScriptUrl(scriptResponse.data.scriptUrl);
     } catch (err) {
       console.error('Failed to fetch settings:', err);
     }
   };
 
   const handleConnectKajabi = async () => {
-    if (!kajabiApiKey) {
-      setError('Please enter your Kajabi API key');
-      return;
-    }
-
     setConnecting(true);
     setError('');
     setSuccess('');
 
     try {
-      await api.post('/kajabi/connect', { apiKey: kajabiApiKey });
-      setKajabiConnected(true);
-      setSuccess('Kajabi connected successfully!');
-      setKajabiApiKey('');
+      const response = await api.get('/kajabi/connect');
+      window.location.href = response.data.authUrl;
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Invalid Kajabi API key');
-    } finally {
+      setError('Failed to initiate Kajabi connection');
       setConnecting(false);
     }
   };
@@ -73,14 +85,40 @@ export default function Settings() {
     }
   };
 
+  const handleConnectSkool = async () => {
+    if (!skoolApiKey) {
+      setError('Please enter your Skool API key');
+      return;
+    }
+
+    setConnecting(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const response = await api.post('/skool/connect', { apiKey: skoolApiKey });
+      setSkoolConnected(true);
+      setSkoolWebhookUrl(response.data.webhookUrl);
+      setSuccess('Skool connected successfully! Copy the webhook URL below to complete setup.');
+      setSkoolApiKey('');
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Invalid Skool API key');
+    } finally {
+      setConnecting(false);
+    }
+  };
+
   const handleDisconnect = async () => {
     const platform = selectedPlatform;
     try {
       await api.delete(`/${platform}/disconnect`);
       if (platform === 'kajabi') {
         setKajabiConnected(false);
-      } else {
+      } else if (platform === 'teachable') {
         setTeachableConnected(false);
+      } else if (platform === 'skool') {
+        setSkoolConnected(false);
+        setSkoolWebhookUrl('');
       }
       setSuccess(`${platform.charAt(0).toUpperCase() + platform.slice(1)} disconnected`);
     } catch (err) {
@@ -104,13 +142,21 @@ export default function Settings() {
   };
 
   const trackingScript = `<script>
-  (function() {
-    var script = document.createElement('script');
-    script.src = 'https://your-domain.com/tracking.js';
-    script.setAttribute('data-site-id', '${siteId}');
-    script.async = true;
-    document.head.appendChild(script);
-  })();
+(function() {
+  var scriptId = '${siteId}';
+  var apiUrl = '${import.meta.env.VITE_API_URL}/tracking/event';
+
+  // Load tracking library
+  var script = document.createElement('script');
+  script.src = '${scriptUrl}';
+  script.async = true;
+  script.onload = function() {
+    if (window.CourseSignal) {
+      window.CourseSignal.init(scriptId, apiUrl);
+    }
+  };
+  document.head.appendChild(script);
+})();
 </script>`;
 
   const handleCopyScript = () => {
@@ -119,7 +165,30 @@ export default function Settings() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const isConnected = selectedPlatform === 'kajabi' ? kajabiConnected : teachableConnected;
+  const handleCopyWebhookUrl = () => {
+    navigator.clipboard.writeText(skoolWebhookUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleToggleAI = async () => {
+    setUpdatingAiPref(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      await api.put('/recommendations/preference', { enabled: !aiEnabled });
+      setAiEnabled(!aiEnabled);
+      setSuccess(`AI recommendations ${!aiEnabled ? 'enabled' : 'disabled'}`);
+
+      // Clear cache when toggling
+      await api.post('/recommendations/clear-cache');
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Failed to update AI preference');
+    } finally {
+      setUpdatingAiPref(false);
+    }
+  };
 
   return (
     <DashboardLayout>
@@ -127,6 +196,58 @@ export default function Settings() {
         <h1 className="text-3xl font-bold text-gray-900 mb-8">Settings</h1>
 
         <div className="space-y-6">
+          {/* AI Recommendations */}
+          <Card>
+            <h2 className="text-xl font-bold text-gray-900 mb-4">AI-Powered Insights</h2>
+            <p className="text-sm text-gray-600 mb-4">
+              Enable AI-powered recommendations for smarter, personalized insights based on your revenue data.
+            </p>
+
+            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <h3 className="font-semibold text-gray-900">AI Recommendations</h3>
+                  {!aiAvailable && (
+                    <span className="text-xs text-warning-600 bg-warning-50 px-2 py-0.5 rounded">
+                      Requires API Key
+                    </span>
+                  )}
+                </div>
+                <p className="text-sm text-gray-600">
+                  {aiEnabled
+                    ? 'Using OpenAI to generate contextual recommendations'
+                    : 'Using rule-based recommendations'}
+                </p>
+              </div>
+              <button
+                onClick={handleToggleAI}
+                disabled={updatingAiPref || !aiAvailable}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                  aiEnabled && aiAvailable
+                    ? 'bg-primary-600'
+                    : 'bg-gray-300'
+                } ${!aiAvailable ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    aiEnabled && aiAvailable ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+            </div>
+
+            {!aiAvailable && (
+              <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm text-blue-700">
+                  To enable AI recommendations, add your OpenAI API key to the backend .env file:
+                  <code className="block mt-2 px-2 py-1 bg-white rounded text-xs">
+                    OPENAI_API_KEY=sk-...
+                  </code>
+                </p>
+              </div>
+            )}
+          </Card>
+
           {/* Platform Integration */}
           <Card>
             <h2 className="text-xl font-bold text-gray-900 mb-4">Platform Integration</h2>
@@ -136,10 +257,10 @@ export default function Settings() {
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Select Your Course Platform
               </label>
-              <div className="flex gap-3">
+              <div className="grid grid-cols-3 gap-3">
                 <button
                   onClick={() => setSelectedPlatform('kajabi')}
-                  className={`flex-1 py-3 px-4 rounded-lg border-2 font-medium transition-colors ${
+                  className={`py-3 px-4 rounded-lg border-2 font-medium transition-colors ${
                     selectedPlatform === 'kajabi'
                       ? 'border-primary-500 bg-primary-50 text-primary-700'
                       : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
@@ -152,7 +273,7 @@ export default function Settings() {
                 </button>
                 <button
                   onClick={() => setSelectedPlatform('teachable')}
-                  className={`flex-1 py-3 px-4 rounded-lg border-2 font-medium transition-colors ${
+                  className={`py-3 px-4 rounded-lg border-2 font-medium transition-colors ${
                     selectedPlatform === 'teachable'
                       ? 'border-primary-500 bg-primary-50 text-primary-700'
                       : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
@@ -160,6 +281,19 @@ export default function Settings() {
                 >
                   Teachable
                   {teachableConnected && (
+                    <CheckCircle className="inline-block w-4 h-4 ml-2 text-success-600" />
+                  )}
+                </button>
+                <button
+                  onClick={() => setSelectedPlatform('skool')}
+                  className={`py-3 px-4 rounded-lg border-2 font-medium transition-colors ${
+                    selectedPlatform === 'skool'
+                      ? 'border-primary-500 bg-primary-50 text-primary-700'
+                      : 'border-gray-300 bg-white text-gray-700 hover:border-gray-400'
+                  }`}
+                >
+                  Skool
+                  {skoolConnected && (
                     <CheckCircle className="inline-block w-4 h-4 ml-2 text-success-600" />
                   )}
                 </button>
@@ -207,21 +341,6 @@ export default function Settings() {
                     <p className="text-sm text-gray-600 mb-4">
                       Connect Kajabi to match every purchase to its traffic source and unlock revenue attribution insights.
                     </p>
-                    <div className="mb-4">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Kajabi API Key
-                      </label>
-                      <input
-                        type="password"
-                        value={kajabiApiKey}
-                        onChange={(e) => setKajabiApiKey(e.target.value)}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                        placeholder="Enter your API key"
-                      />
-                      <p className="mt-2 text-sm text-gray-500">
-                        Find your API key in Kajabi Settings → Integrations → API
-                      </p>
-                    </div>
                     <Button onClick={handleConnectKajabi} loading={connecting}>
                       Connect Kajabi
                     </Button>
@@ -279,6 +398,120 @@ export default function Settings() {
               </div>
             )}
 
+            {/* Skool Integration */}
+            {selectedPlatform === 'skool' && (
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-3">Skool Integration</h3>
+
+                {skoolConnected ? (
+                  <div>
+                    <div className="flex items-center gap-2 mb-4">
+                      <CheckCircle className="w-5 h-5 text-success-600" />
+                      <span className="text-success-700 font-medium">
+                        Skool connected
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-4">
+                      Your Skool purchases are being tracked via webhooks.
+                    </p>
+
+                    {/* Webhook URL Display */}
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Webhook URL (paste this in Skool/Zapier)
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="text"
+                          value={skoolWebhookUrl}
+                          readOnly
+                          className="w-full px-4 py-2 pr-12 border border-gray-300 rounded-lg bg-gray-50 text-sm font-mono"
+                        />
+                        <button
+                          onClick={handleCopyWebhookUrl}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 p-2 hover:bg-gray-200 rounded transition-colors"
+                        >
+                          {copied ? (
+                            <CheckCircle className="w-5 h-5 text-success-600" />
+                          ) : (
+                            <Copy className="w-5 h-5 text-gray-600" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-3">
+                      <Button
+                        variant="secondary"
+                        onClick={handleSync}
+                        loading={syncing}
+                      >
+                        <RefreshCw className="w-4 h-4 mr-2" />
+                        Sync Now
+                      </Button>
+                      <Button variant="danger" onClick={handleDisconnect}>
+                        Disconnect
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <div className="flex items-center gap-2 mb-4">
+                      <XCircle className="w-5 h-5 text-gray-400" />
+                      <span className="text-gray-600 font-medium">
+                        Not connected
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-600 mb-4">
+                      Connect Skool to match every purchase to its traffic source and unlock revenue attribution insights.
+                    </p>
+
+                    {/* API Key Input */}
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Skool API Key
+                      </label>
+                      <input
+                        type="password"
+                        value={skoolApiKey}
+                        onChange={(e) => setSkoolApiKey(e.target.value)}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                        placeholder="Enter your API key"
+                      />
+                      <p className="mt-2 text-sm text-gray-500">
+                        Get your API key from{' '}
+                        <a
+                          href="https://skoolapi.com"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary-600 hover:text-primary-700 underline"
+                        >
+                          SkoolAPI.com
+                        </a>{' '}
+                        or your Skool community settings
+                      </p>
+                    </div>
+
+                    <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                      <h4 className="text-sm font-semibold text-blue-900 mb-2">
+                        About Skool Integration
+                      </h4>
+                      <ul className="text-xs text-blue-800 space-y-1">
+                        <li>• Skool integration uses webhook-based purchase tracking</li>
+                        <li>• After connecting, you'll receive a webhook URL to configure in Skool or Zapier</li>
+                        <li>• Purchases will be automatically attributed when webhooks are configured</li>
+                        <li>• Works with Skool's Zapier plugin or external payment processors</li>
+                      </ul>
+                    </div>
+
+                    <Button onClick={handleConnectSkool} loading={connecting}>
+                      Connect Skool
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+
             {error && (
               <div className="mt-4 p-3 bg-danger-50 border border-danger-200 rounded-lg">
                 <p className="text-sm text-danger-700">{error}</p>
@@ -324,7 +557,7 @@ export default function Settings() {
             {/* Step 2: Platform-Specific Instructions */}
             <div className="mb-6">
               <h3 className="text-sm font-semibold text-gray-900 mb-3">
-                Step 2: Install on your {selectedPlatform === 'kajabi' ? 'Kajabi' : 'Teachable'} site
+                Step 2: Install on your {selectedPlatform === 'kajabi' ? 'Kajabi' : selectedPlatform === 'teachable' ? 'Teachable' : 'Skool'} site
               </h3>
 
               <button
@@ -355,7 +588,7 @@ export default function Settings() {
                         </p>
                       </div>
                     </>
-                  ) : (
+                  ) : selectedPlatform === 'teachable' ? (
                     <>
                       <p className="text-sm font-medium text-gray-900">For Teachable:</p>
                       <ol className="list-decimal list-inside space-y-2 text-sm text-gray-700">
@@ -373,6 +606,28 @@ export default function Settings() {
                         </p>
                       </div>
                     </>
+                  ) : (
+                    <>
+                      <p className="text-sm font-medium text-gray-900">For Skool:</p>
+                      <ol className="list-decimal list-inside space-y-2 text-sm text-gray-700">
+                        <li>Log in to your Skool community as an admin</li>
+                        <li>Go to <strong>Settings</strong> → <strong>Plugins</strong> (requires Pro plan)</li>
+                        <li>Look for the <strong>Custom Code</strong> or <strong>HTML/CSS</strong> section</li>
+                        <li>Paste the tracking script in the <strong>Footer Code</strong> field</li>
+                        <li>Click <strong>Save</strong> or <strong>Update</strong></li>
+                        <li>The script will track all visitors to your Skool community</li>
+                      </ol>
+                      <div className="mt-3 p-3 bg-warning-50 border border-warning-200 rounded">
+                        <p className="text-xs text-warning-900">
+                          <strong>Note:</strong> Custom code injection requires a Skool Pro plan. If you don't have access to custom code, you can track purchases via webhook integration only (configured in the Platform Integration section above).
+                        </p>
+                      </div>
+                      <div className="mt-3 p-3 bg-primary-50 border border-primary-200 rounded">
+                        <p className="text-xs text-primary-900">
+                          <strong>Alternative:</strong> If you're using external landing pages or sales funnels that direct to Skool, install the tracking script on those pages instead. Purchases will still be attributed via webhook.
+                        </p>
+                      </div>
+                    </>
                   )}
                 </div>
               )}
@@ -380,21 +635,22 @@ export default function Settings() {
 
             {/* Step 3: Test Installation */}
             <div className="mb-4">
-              <h3 className="text-sm font-semibold text-gray-900 mb-3">Step 3: Test your installation</h3>
-              <p className="text-sm text-gray-600 mb-3">
-                Click the button below to verify that your tracking script is working correctly.
-              </p>
-              <Button
-                variant="secondary"
-                onClick={() => {
-                  window.open(`https://your-domain.com/test?siteId=${siteId}`, '_blank');
-                }}
-              >
-                Test Installation
-              </Button>
-              <p className="text-xs text-gray-500 mt-2">
-                Opens a test page that checks if the tracking script is installed and sending data correctly.
-              </p>
+              <h3 className="text-sm font-semibold text-gray-900 mb-3">Step 3: Verify your installation</h3>
+              <div className="bg-gray-50 p-4 rounded-lg space-y-3">
+                <p className="text-sm text-gray-700">
+                  To verify the tracking script is working:
+                </p>
+                <ol className="list-decimal list-inside space-y-2 text-sm text-gray-700 ml-2">
+                  <li>Visit your course website in a new browser tab</li>
+                  <li>Open browser Developer Tools (F12 or Cmd+Option+I on Mac)</li>
+                  <li>Go to the <strong>Console</strong> tab</li>
+                  <li>Look for a message like: <code className="bg-gray-200 px-1 py-0.5 rounded text-xs">CourseSignal tracking initialized</code></li>
+                  <li>Check the <strong>Network</strong> tab for requests to <code className="bg-gray-200 px-1 py-0.5 rounded text-xs">/api/tracking/event</code></li>
+                </ol>
+                <p className="text-xs text-gray-600 mt-3">
+                  If you see tracking events being sent, your installation is working correctly!
+                </p>
+              </div>
             </div>
 
             <div className="p-3 bg-success-50 border border-success-200 rounded-lg">

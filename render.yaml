@@ -98,7 +98,6 @@ services:
   - type: web
     name: coursesignal-frontend
     env: static
-    region: oregon
     buildCommand: cd frontend && npm ci && npm run build
     staticPublishPath: ./frontend/dist
 

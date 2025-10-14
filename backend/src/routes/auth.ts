@@ -1,7 +1,7 @@
 import { Router, Response } from 'express';
 import { AuthRequest, authenticate } from '../middleware/auth';
 import { authLimiter } from '../middleware/rateLimit';
-import { signupSchema, loginSchema, resetPasswordSchema } from '../utils/validation';
+import { signupSchema, loginSchema, resetPasswordSchema, changePasswordSchema } from '../utils/validation';
 import * as authService from '../services/authService';
 import { verifyRefreshToken, generateAccessToken } from '../utils/jwt';
 import { query } from '../db/connection';
@@ -151,6 +151,22 @@ router.post('/logout', authenticate, async (req: AuthRequest, res: Response) => 
     res.json({ message: 'Logged out successfully' });
   } catch (error) {
     res.status(500).json({ error: 'Logout failed' });
+  }
+});
+
+// Change password
+router.post('/change-password', authenticate, async (req: AuthRequest, res: Response) => {
+  try {
+    const { currentPassword, newPassword } = changePasswordSchema.parse(req.body);
+
+    await authService.changePassword(req.user!.userId, currentPassword, newPassword);
+
+    res.json({ message: 'Password changed successfully' });
+  } catch (error: any) {
+    if (error.name === 'ZodError') {
+      return res.status(400).json({ error: error.errors[0].message });
+    }
+    res.status(400).json({ error: error.message || 'Password change failed' });
   }
 });
 

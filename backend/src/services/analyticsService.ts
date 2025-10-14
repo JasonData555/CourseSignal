@@ -232,3 +232,25 @@ export async function getDrillDownData(
     avgOrderValue: parseFloat(row.avg_order_value).toFixed(2),
   }));
 }
+
+export async function getDailyRevenueChart(userId: string, dateRange: DateRange) {
+  const { startDate, endDate } = dateRange;
+
+  const result = await query(
+    `SELECT
+      DATE(purchased_at) as date,
+      COALESCE(SUM(amount), 0) as revenue
+    FROM purchases
+    WHERE user_id = $1
+      AND purchased_at >= $2
+      AND purchased_at <= $3
+    GROUP BY DATE(purchased_at)
+    ORDER BY date ASC`,
+    [userId, startDate, endDate]
+  );
+
+  return result.rows.map((row) => ({
+    date: row.date,
+    revenue: parseFloat(row.revenue),
+  }));
+}

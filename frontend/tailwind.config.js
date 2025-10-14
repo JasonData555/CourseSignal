@@ -96,12 +96,13 @@ export default {
         },
         // Data visualization palette for charts
         chart: {
-          series1: '#6366f1', // Indigo
-          series2: '#8b5cf6', // Purple
-          series3: '#ec4899', // Pink
-          series4: '#f59e0b', // Amber
-          series5: '#10b981', // Emerald
-          series6: '#06b6d4', // Cyan
+          series1: '#009392', // Teal
+          series2: '#72aaa1', // Muted teal
+          series3: '#b1c7b3', // Sage green
+          series4: '#f1eac8', // Cream
+          series5: '#e5b9ad', // Dusty rose
+          series6: '#d98994', // Mauve
+          series7: '#d0587e', // Deep pink
           neutral: '#64748b', // Slate for baselines
           gridLines: '#f1f5f9',
           background: '#fafbfc',

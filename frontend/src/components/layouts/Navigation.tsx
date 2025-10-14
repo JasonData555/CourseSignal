@@ -21,8 +21,9 @@ export function Navigation() {
         });
         setActiveLaunchCount(response.data.launches?.length || 0);
       } catch (error) {
-        // Silently fail - badge just won't show
+        // Silently fail - badge just won't show (non-critical error)
         console.error('Failed to fetch active launches:', error);
+        setActiveLaunchCount(0);
       }
     };
 

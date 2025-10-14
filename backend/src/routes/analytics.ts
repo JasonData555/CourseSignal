@@ -106,4 +106,19 @@ router.get('/drilldown/:source', authenticate, async (req: AuthRequest, res: Res
   }
 });
 
+// Get daily revenue chart data
+router.get('/daily-revenue', authenticate, async (req: AuthRequest, res: Response) => {
+  try {
+    const range = (req.query.range as string) || '30d';
+    const dateRange = parseDateRange(range);
+
+    const data = await analyticsService.getDailyRevenueChart(req.user!.userId, dateRange);
+
+    res.json(data);
+  } catch (error) {
+    console.error('Daily revenue error:', error);
+    res.status(500).json({ error: 'Failed to fetch daily revenue' });
+  }
+});
+
 export default router;

@@ -6,19 +6,23 @@ import {
   Button,
   MetricCardSkeleton,
   TableSkeleton,
+  Table,
+  Column,
+  Toast,
+  ToastContainer,
 } from '../components/design-system';
 import {
-  RevenueSummary,
-  RevenueBySource,
-  RecentPurchases,
-  SmartRecommendations,
-  QuickInsights,
+  CompactMetricsBar,
+  InsightsPanel,
+  HorizontalBarChart,
+  QuickStatsCard,
   SourceData,
-  Purchase,
   Recommendation,
 } from '../components/dashboard';
-import { Download, Database, Filter } from 'lucide-react';
+import { Download, Database, Filter, ChevronDown, ChevronUp, Sparkles } from 'lucide-react';
+import { clsx } from 'clsx';
 import api from '../lib/api';
+import { useToast } from '../hooks/useToast';
 
 interface SummaryData {
   totalRevenue: number;
@@ -33,13 +37,17 @@ interface SummaryData {
 }
 
 export default function Dashboard() {
+  const { toasts, removeToast, error: showError } = useToast();
   const [dateRange, setDateRange] = useState<DateRange>('30d');
   const [selectedSource, setSelectedSource] = useState<string>('all');
   const [loading, setLoading] = useState(true);
   const [summaryData, setSummaryData] = useState<SummaryData | null>(null);
   const [sourceData, setSourceData] = useState<SourceData[]>([]);
-  const [recentPurchases, setRecentPurchases] = useState<Purchase[]>([]);
   const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
+  const [loadingRecommendations, setLoadingRecommendations] = useState(false);
+  const [recommendationSource, setRecommendationSource] = useState<'ai' | 'rule-based'>('rule-based');
+  const [showDetailedTable, setShowDetailedTable] = useState(false);
+  const [showInsights, setShowInsights] = useState(false);
 
   useEffect(() => {
     fetchDashboardData();
@@ -59,17 +67,34 @@ export default function Dashboard() {
       const sourcesResponse = await api.get(`/analytics/sources?range=${dateRange}`);
       setSourceData(sourcesResponse.data);
 
-      // Fetch recent purchases
-      const purchasesResponse = await api.get('/analytics/recent-purchases?limit=10');
-      setRecentPurchases(purchasesResponse.data);
-
-      // Generate recommendations based on data
-      const recs = generateRecommendations(summaryResponse.data, sourcesResponse.data);
-      setRecommendations(recs);
+      // Fetch AI-powered recommendations
+      await fetchRecommendations(summaryResponse.data, sourcesResponse.data);
     } catch (error) {
       console.error('Failed to fetch dashboard data:', error);
+      showError('Failed to load dashboard data. Please try again.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchRecommendations = async (summary: SummaryData, sources: SourceData[]) => {
+    setLoadingRecommendations(true);
+    try {
+      const response = await api.post('/recommendations/generate', {
+        summary,
+        sources,
+      });
+
+      setRecommendations(response.data.recommendations);
+      setRecommendationSource(response.data.source);
+    } catch (error) {
+      console.error('Failed to fetch recommendations, using fallback:', error);
+      // Fallback to client-side rule-based recommendations
+      const fallbackRecs = generateRecommendations(summary, sources);
+      setRecommendations(fallbackRecs);
+      setRecommendationSource('rule-based');
+    } finally {
+      setLoadingRecommendations(false);
     }
   };
 
@@ -160,12 +185,110 @@ export default function Dashboard() {
     }
   };
 
+  const handleSourceClick = (source: string) => {
+    setSelectedSource(source);
+  };
+
+  const maxRevenue = Math.max(...sourceData.map((d) => d.revenue), 1);
+
+  const columns: Column<SourceData>[] = [
+    {
+      key: 'source',
+      header: 'Source',
+      sortable: true,
+      render: (row) => (
+        <div className="font-medium text-gray-900 capitalize">{row.source}</div>
+      ),
+    },
+    {
+      key: 'revenue',
+      header: 'Revenue',
+      sortable: true,
+      render: (row) => (
+        <div>
+          <div className="font-bold text-gray-900 mb-1">
+            ${row.revenue.toLocaleString()}
+          </div>
+          {/* Horizontal bar for visual comparison */}
+          <div className="w-full bg-gray-100 rounded-full h-2">
+            <div
+              className="h-2 rounded-full"
+              style={{
+                width: `${(row.revenue / maxRevenue) * 100}%`,
+                backgroundColor: '#009392' // Teal from chart palette
+              }}
+            />
+          </div>
+        </div>
+      ),
+    },
+    {
+      key: 'visitors',
+      header: 'Visitors',
+      sortable: true,
+      align: 'right',
+      render: (row) => (
+        <span className="text-gray-700">{row.visitors.toLocaleString()}</span>
+      ),
+    },
+    {
+      key: 'students',
+      header: 'Students',
+      sortable: true,
+      align: 'right',
+      render: (row) => (
+        <span className="text-gray-700">{row.students.toLocaleString()}</span>
+      ),
+    },
+    {
+      key: 'conversionRate',
+      header: 'Conversion',
+      sortable: true,
+      align: 'right',
+      render: (row) => {
+        const rate = parseFloat(row.conversionRate);
+        return (
+          <span
+            className={clsx(
+              'font-medium',
+              rate >= 5
+                ? 'text-success-600'
+                : rate >= 2
+                ? 'text-gray-700'
+                : 'text-warning-600'
+            )}
+          >
+            {row.conversionRate}%
+          </span>
+        );
+      },
+    },
+    {
+      key: 'avgOrderValue',
+      header: 'AOV',
+      sortable: true,
+      align: 'right',
+      render: (row) => (
+        <span className="text-gray-700">${row.avgOrderValue}</span>
+      ),
+    },
+    {
+      key: 'revenuePerVisitor',
+      header: 'Rev/Visitor',
+      sortable: true,
+      align: 'right',
+      render: (row) => (
+        <span className="text-gray-700">${row.revenuePerVisitor}</span>
+      ),
+    },
+  ];
+
   if (loading) {
     return (
       <DashboardLayout>
-        <div className="space-y-8">
+        <div className="space-y-6">
           <div className="flex justify-between items-center">
-            <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
             <DateRangeSelector value={dateRange} onChange={setDateRange} />
           </div>
 
@@ -177,7 +300,6 @@ export default function Dashboard() {
           </div>
 
           <TableSkeleton />
-          <TableSkeleton rows={3} />
         </div>
       </DashboardLayout>
     );
@@ -268,20 +390,40 @@ export default function Dashboard() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-8">
+      <div className="max-w-7xl mx-auto space-y-6">
         {/* Header with controls */}
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-            <p className="text-base text-gray-600 mt-1">
+            <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+            <p className="text-sm text-gray-600 mt-1">
               See exactly where your revenue comes from
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-3">
+            {/* Source Filter */}
+            {sourceData.length > 0 && (
+              <div className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg shadow-sm">
+                <Filter className="w-4 h-4 text-gray-500" />
+                <select
+                  value={selectedSource}
+                  onChange={(e) => setSelectedSource(e.target.value)}
+                  className="text-sm border-none focus:ring-0 focus:outline-none min-w-[140px]"
+                >
+                  <option value="all">All Sources</option>
+                  {sourceData.map((source) => (
+                    <option key={source.source} value={source.source}>
+                      {source.source.charAt(0).toUpperCase() + source.source.slice(1)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             <div className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg shadow-sm">
               <span className="text-sm font-medium text-gray-700">Date Range:</span>
               <DateRangeSelector value={dateRange} onChange={setDateRange} />
             </div>
+
             <Button
               variant="secondary"
               onClick={handleExport}
@@ -293,52 +435,135 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Quick Insights - Hero section with actionable summary */}
-        {sourceData.length > 0 && (
-          <QuickInsights
-            sources={sourceData}
-            totalRevenue={summaryData.totalRevenue}
-            revenueTrend={summaryData.trends.revenue}
-          />
-        )}
+        {/* Compact Metrics Bar */}
+        <CompactMetricsBar
+          totalRevenue={summaryData.totalRevenue}
+          totalStudents={summaryData.totalStudents}
+          avgOrderValue={summaryData.avgOrderValue}
+          totalPurchases={summaryData.totalPurchases}
+          trends={summaryData.trends}
+        />
 
-        {/* Source Filter */}
-        {sourceData.length > 0 && (
-          <div className="flex items-center gap-3">
-            <Filter className="w-4 h-4 text-gray-500" />
-            <label htmlFor="source-filter" className="text-sm font-medium text-gray-700">
-              Filter by Source:
-            </label>
-            <select
-              id="source-filter"
-              value={selectedSource}
-              onChange={(e) => setSelectedSource(e.target.value)}
-              className="text-sm border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-colors min-w-[180px]"
+        {/* Revenue Attribution Section */}
+        <div className="bg-white rounded-lg shadow-card border border-gray-200 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">Revenue by Source</h2>
+              <p className="text-sm text-gray-600 mt-1">
+                See which traffic sources generate the most revenue
+              </p>
+            </div>
+            {/* AI Insights Toggle Button */}
+            <button
+              onClick={() => setShowInsights(!showInsights)}
+              className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-md transition-colors border border-gray-300 hover:bg-gray-50"
             >
-              <option value="all">All Sources</option>
-              {sourceData.map((source) => (
-                <option key={source.source} value={source.source}>
-                  {source.source.charAt(0).toUpperCase() + source.source.slice(1)}
-                </option>
-              ))}
-            </select>
+              <Sparkles className="w-4 h-4" />
+              {showInsights ? 'Hide' : 'Show'} Insights
+            </button>
           </div>
-        )}
 
-        {/* Hero Metrics Section */}
-        <RevenueSummary data={summaryData} />
+          {/* Revenue Attribution Chart - Full Width */}
+          <div className="bg-white rounded-lg border border-gray-200 p-6 mb-4">
+            <HorizontalBarChart
+              data={sourceData}
+              onBarClick={handleSourceClick}
+              height={250}
+            />
+          </div>
 
-        {/* Revenue by Source Table - Most important for attribution */}
-        <RevenueBySource data={sourceData} />
+          {/* Conditionally render Insights & Quick Stats */}
+          {/* Responsive: 50/50 on lg (1024px+), stacked on smaller screens */}
+          {showInsights && (
+            <div className="flex flex-col xl:flex-row gap-4">
+              {/* Left: AI Insights Panel (50% on xl+) */}
+              <div className="w-full xl:w-1/2">
+                <InsightsPanel
+                  recommendations={recommendations.slice(0, 3)}
+                  recommendationSource={recommendationSource}
+                  loadingRecommendations={loadingRecommendations}
+                />
+              </div>
 
-        {/* Smart Recommendations - Contextual, supporting insights */}
-        {recommendations.length > 0 && (
-          <SmartRecommendations recommendations={recommendations} />
-        )}
+              {/* Right: Quick Stats Card (50% on xl+) */}
+              <div className="w-full xl:w-1/2">
+                <QuickStatsCard
+                  conversionRate={
+                    sourceData.length > 0
+                      ? sourceData.reduce((sum, s) => sum + parseFloat(s.conversionRate), 0) / sourceData.length
+                      : 0
+                  }
+                  revenuePerVisitor={
+                    sourceData.length > 0
+                      ? sourceData.reduce((sum, s) => sum + parseFloat(s.revenuePerVisitor), 0) / sourceData.length
+                      : 0
+                  }
+                  topSource={
+                    sourceData.length > 0
+                      ? {
+                          name: sourceData[0].source.charAt(0).toUpperCase() + sourceData[0].source.slice(1),
+                          revenue: sourceData[0].revenue,
+                        }
+                      : null
+                  }
+                  matchRate={
+                    summaryData && summaryData.totalPurchases > 0
+                      ? (sourceData.reduce((sum, s) => sum + s.students, 0) / summaryData.totalPurchases) * 100
+                      : 0
+                  }
+                />
+              </div>
+            </div>
+          )}
 
-        {/* Recent Purchases Feed - Supporting detail */}
-        <RecentPurchases purchases={recentPurchases} />
+          {/* Collapsible Detailed Table */}
+          <div className="mt-6 pt-4 border-t border-gray-200">
+            <button
+              onClick={() => setShowDetailedTable(!showDetailedTable)}
+              className="flex items-center gap-2 text-sm font-medium text-primary-600 hover:text-primary-700 transition-colors"
+            >
+              {showDetailedTable ? (
+                <>
+                  <ChevronUp className="w-4 h-4" />
+                  Hide Detailed Table ({sourceData.length} sources)
+                </>
+              ) : (
+                <>
+                  <ChevronDown className="w-4 h-4" />
+                  View Detailed Table ({sourceData.length} sources)
+                </>
+              )}
+            </button>
+
+            {showDetailedTable && (
+              <div className="mt-4">
+                <Table
+                  columns={columns}
+                  data={sourceData}
+                  sortKey="revenue"
+                  sortDirection="desc"
+                  onRowClick={(row) => handleSourceClick(row.source)}
+                  emptyMessage="No revenue data yet. Once purchases start coming in, you'll see them here."
+                />
+              </div>
+            )}
+          </div>
+        </div>
       </div>
+
+      {/* Toast Notifications */}
+      <ToastContainer>
+        {toasts.map((toast) => (
+          <Toast
+            key={toast.id}
+            type={toast.type}
+            message={toast.message}
+            onClose={() => removeToast(toast.id)}
+            autoClose={toast.autoClose}
+            duration={toast.duration}
+          />
+        ))}
+      </ToastContainer>
     </DashboardLayout>
   );
 }

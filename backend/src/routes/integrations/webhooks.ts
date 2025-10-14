@@ -1,6 +1,7 @@
 import { Router } from 'express';
-import * as kajabiService from '../services/kajabiService';
-import * as teachableService from '../services/teachableService';
+import * as kajabiService from '../../services/integrations/kajabiService';
+import * as teachableService from '../../services/integrations/teachableService';
+import * as skoolService from '../../services/integrations/skoolService';
 
 const router = Router();
 
@@ -42,6 +43,30 @@ router.post('/teachable/:userId', async (req, res) => {
     res.status(200).json({ received: true });
   } catch (error) {
     console.error('Teachable webhook error:', error);
+    res.status(500).json({ error: 'Webhook processing failed' });
+  }
+});
+
+// Skool webhook receiver
+router.post('/skool/:userId', async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    // Verify webhook signature (optional - depends on webhook source)
+    const signature = req.headers['x-skool-signature'] as string;
+
+    // Note: Signature verification is flexible for Skool since webhooks
+    // can come from multiple sources (Zapier, payment processors, etc.)
+    if (signature && !skoolService.verifyWebhookSignature(req.body, signature)) {
+      console.warn('Skool webhook signature verification failed - processing anyway');
+      // We don't reject here as Skool webhooks may come from various sources
+    }
+
+    await skoolService.handleWebhook(userId, req.body);
+
+    res.status(200).json({ received: true });
+  } catch (error) {
+    console.error('Skool webhook error:', error);
     res.status(500).json({ error: 'Webhook processing failed' });
   }
 });

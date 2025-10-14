@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
-import { authenticate, AuthRequest } from '../middleware/auth';
-import * as launchService from '../services/launchService';
-import * as launchAnalyticsService from '../services/launchAnalyticsService';
+import { authenticate, AuthRequest } from '../../middleware/auth';
+import * as launchService from '../../services/launches/launchService';
+import * as launchAnalyticsService from '../../services/launches/launchAnalyticsService';
 
 const router = Router();
 

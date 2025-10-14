@@ -6,7 +6,7 @@ export interface Purchase {
   amount: number;
   currency?: string;
   courseName?: string;
-  platform: 'kajabi' | 'teachable' | 'stripe';
+  platform: 'kajabi' | 'teachable' | 'skool' | 'stripe';
   platformPurchaseId: string;
   purchasedAt: Date;
   deviceFingerprint?: string;

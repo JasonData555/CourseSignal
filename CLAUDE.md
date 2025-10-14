@@ -54,19 +54,40 @@ curl -X POST http://localhost:3002/api/auth/signup \
 
 ### Backend Architecture
 
+**Organized Directory Structure:**
+The backend follows a modular, domain-driven structure for improved maintainability:
+
 **Service Layer Pattern:**
 - `services/` - Business logic isolated from routes
-  - `attributionService.ts` - Core purchase attribution logic (matches purchases to visitors by email → device fingerprint)
-  - `trackingService.ts` - Visitor/session tracking and storage
-  - `kajabiService.ts` - Kajabi OAuth, webhooks, purchase sync
-  - `teachableService.ts` - Teachable OAuth, webhooks, purchase sync
-  - `analyticsService.ts` - Dashboard metrics and revenue calculations
-  - `authService.ts` - User authentication, JWT token generation
-  - `emailService.ts` - Email verification, password reset (SendGrid)
+  - **Core Services:**
+    - `attributionService.ts` - Core purchase attribution logic (matches purchases to visitors by email → device fingerprint)
+    - `trackingService.ts` - Visitor/session tracking and storage
+    - `analyticsService.ts` - Dashboard metrics and revenue calculations
+    - `authService.ts` - User authentication, JWT token generation
+    - `emailService.ts` - Email verification, password reset (SendGrid)
+    - `recommendationService.ts` - AI-powered and rule-based recommendations
+  - **`integrations/`** - Platform integration services
+    - `kajabiService.ts` - Kajabi OAuth, webhooks, purchase sync
+    - `teachableService.ts` - Teachable OAuth, webhooks, purchase sync
+  - **`launches/`** - Launch tracking and analytics
+    - `launchService.ts` - Launch CRUD, sharing, status management
+    - `launchAnalyticsService.ts` - Launch metrics and comparison
 
 **Routes Layer:**
 - `routes/` - Express route handlers (thin layer that calls services)
-  - Each route file corresponds to an API namespace (`/api/auth`, `/api/kajabi`, etc.)
+  - **Core Routes:** `auth.ts`, `tracking.ts`, `script.ts`, `analytics.ts`, `recommendations.ts`
+  - **`integrations/`** - Platform integration endpoints
+    - `kajabi.ts` - Kajabi OAuth and sync endpoints
+    - `teachable.ts` - Teachable OAuth and sync endpoints
+    - `webhooks.ts` - Webhook receivers for all platforms
+  - **`launches/`** - Launch-related endpoints
+    - `launches.ts` - Launch CRUD and analytics endpoints
+    - `public.ts` - Public endpoints (match rate stats, launch leaderboard, social proof)
+
+**Shared Types:**
+- `types/` - TypeScript interfaces and type definitions
+  - `common.ts` - Shared interfaces (User, Visitor, Purchase, Launch, etc.)
+  - `index.ts` - Central export for all types
 
 **Database:**
 - Direct PostgreSQL queries via `pg` package (no ORM)
@@ -127,7 +148,7 @@ Target match rate: 85%+
 
 ## Platform Integrations
 
-### Kajabi & Teachable Flow
+### Kajabi & Teachable Flow (OAuth-based)
 1. User clicks "Connect" in Settings
 2. OAuth redirect to platform (state token stored in `users.password_reset_token` temporarily)
 3. Callback receives `code`, exchanges for access/refresh tokens
@@ -144,6 +165,49 @@ Target match rate: 85%+
 - `POST /api/webhooks/kajabi/:userId`
 - `POST /api/webhooks/teachable/:userId`
 
+### Skool Flow (API Key + Webhook-based)
+1. User enters API key from SkoolAPI.com or Skool settings
+2. System validates API key and saves encrypted to `platform_integrations`
+3. Webhook URL generated: `/api/webhooks/skool/:userId`
+4. User copies webhook URL and configures in Skool/Zapier
+5. Purchases tracked via webhook notifications (primary method)
+6. Manual sync available as fallback (limited by Skool API capabilities)
+
+**Integration Type:** API Key authentication (not OAuth)
+**Purchase Tracking:** Webhook-driven (real-time) + Manual sync (fallback)
+**Webhook Sources:** Skool's Zapier plugin, external payment processors (Stripe, CopeCart, SamCart)
+
+**API Endpoints:**
+- `POST /api/skool/connect` - Connect with API key
+- `GET /api/skool/status` - Get connection status + webhook URL
+- `POST /api/skool/sync` - Manual sync trigger
+- `DELETE /api/skool/disconnect` - Disconnect integration
+- `GET /api/skool/webhook-url` - Get webhook URL for configuration
+
+**Webhook Endpoint:**
+- `POST /api/webhooks/skool/:userId` - Receives purchase notifications
+
+**Webhook Payload Format (flexible):**
+```json
+{
+  "event_type": "purchase.completed | member.joined | payment.succeeded",
+  "data": {
+    "email": "user@example.com",
+    "amount": 99.00,
+    "currency": "USD",
+    "community_name": "My Skool Community",
+    "member_id": "12345",
+    "purchased_at": "2025-01-15T12:00:00Z"
+  }
+}
+```
+
+**Configuration Notes:**
+- Skool integration uses third-party SkoolAPI for programmatic access
+- Webhook verification is optional (flexible for multiple sources)
+- Custom tracking script requires Skool Pro plan (Plugins access)
+- Alternative: Install tracking script on external landing pages/funnels
+
 ### Sync Jobs
 Background purchase syncs tracked in `sync_jobs` table with status: pending → running → completed/failed.
 
@@ -153,11 +217,15 @@ Background purchase syncs tracked in `sync_jobs` table with status: pending → 
 ```
 DATABASE_URL=postgresql://user:pass@localhost:5432/coursesignal
 JWT_SECRET=your-secret
-ENCRYPTION_KEY=32-character-key   # For encrypting OAuth tokens
+ENCRYPTION_KEY=32-character-key   # For encrypting OAuth tokens and API keys
 KAJABI_CLIENT_ID=...
 KAJABI_CLIENT_SECRET=...
+KAJABI_WEBHOOK_SECRET=...
 TEACHABLE_CLIENT_ID=...
 TEACHABLE_CLIENT_SECRET=...
+TEACHABLE_WEBHOOK_SECRET=...
+SKOOL_API_BASE=https://api.skoolapi.com  # Optional, defaults to SkoolAPI
+SKOOL_WEBHOOK_SECRET=...  # Optional, for webhook signature verification
 APP_URL=http://localhost:5173
 ```
 
@@ -180,17 +248,20 @@ Use this to test dashboard UX/UI with realistic metrics.
 
 ## Working with Services
 
-When modifying platform integrations (Kajabi, Teachable), maintain this structure:
+When modifying platform integrations, maintain this structure:
 
-1. **Service file** (`services/teachableService.ts`):
+### OAuth-based Platforms (Kajabi, Teachable)
+
+1. **Service file** (`services/integrations/teachableService.ts`):
    - `getOAuthUrl(state)` - Generate OAuth authorization URL
    - `exchangeCodeForToken(code)` - Exchange auth code for tokens
    - `saveIntegration(userId, accessToken, refreshToken)` - Encrypt and store
    - `getIntegration(userId)` - Retrieve and decrypt tokens
    - `syncPurchases(userId)` - Fetch purchases from platform API
    - `handleWebhook(userId, event)` - Process webhook events
+   - `verifyWebhookSignature(payload, signature)` - Verify webhook authenticity
 
-2. **Route file** (`routes/teachable.ts`):
+2. **Route file** (`routes/integrations/teachable.ts`):
    - `GET /connect` - Initiate OAuth
    - `GET /callback` - Handle OAuth callback
    - `POST /sync` - Manual sync trigger
@@ -202,15 +273,48 @@ When modifying platform integrations (Kajabi, Teachable), maintain this structur
    app.use('/api/teachable', teachableRoutes);
    ```
 
-4. **Update webhook handler** in `routes/webhooks.ts`
+4. **Update webhook handler** in `routes/integrations/webhooks.ts`
+
+### API Key-based Platforms (Skool)
+
+1. **Service file** (`services/integrations/skoolService.ts`):
+   - `saveIntegration(userId, apiKey, communityId)` - Encrypt and store API key
+   - `getIntegration(userId)` - Retrieve and decrypt API key
+   - `getWebhookUrl(userId)` - Generate webhook URL for user to configure
+   - `syncPurchases(userId)` - Manual sync (limited by API capabilities)
+   - `handleWebhook(userId, event)` - Process webhook events (flexible format)
+   - `verifyWebhookSignature(payload, signature)` - Optional verification
+   - `testApiKey(apiKey)` - Validate API key before saving
+
+2. **Route file** (`routes/integrations/skool.ts`):
+   - `POST /connect` - Connect with API key (validates before saving)
+   - `GET /webhook-url` - Get webhook URL for Skool/Zapier configuration
+   - `POST /sync` - Manual sync trigger (fallback method)
+   - `GET /status` - Connection status + webhook URL
+   - `DELETE /disconnect` - Disconnect integration
+   - `POST /test-api-key` - Test API key validity
+
+3. **Register route** in `backend/src/index.ts`:
+   ```typescript
+   app.use('/api/skool', skoolRoutes);
+   ```
+
+4. **Update webhook handler** in `routes/integrations/webhooks.ts`:
+   ```typescript
+   router.post('/skool/:userId', async (req, res) => {
+     // Flexible webhook handling for multiple sources
+   });
+   ```
 
 ## Key Files
 
 - `backend/src/services/attributionService.ts` - Core attribution algorithm
 - `backend/src/db/schema.sql` - Complete database schema
-- `frontend/src/pages/Settings.tsx` - Platform integration UI with toggle between Kajabi/Teachable
+- `frontend/src/pages/Settings.tsx` - Platform integration UI with toggle between Kajabi/Teachable/Skool
 - `tracking-script/src/index.ts` - Tracking script entry point
 - `backend/src/db/seed.ts` - Database seeding script
+- `backend/src/services/integrations/skoolService.ts` - Skool API key + webhook integration
+- `backend/src/routes/integrations/skool.ts` - Skool API endpoints
 - `IMPLEMENTATION_SUMMARY.md` - Recently completed Teachable integration details
 
 ## Current Status
@@ -219,7 +323,8 @@ When modifying platform integrations (Kajabi, Teachable), maintain this structur
 - Backend API with auth, tracking, analytics
 - Kajabi integration (OAuth, webhooks, sync)
 - Teachable integration (OAuth, webhooks, sync)
-- Settings page with platform toggle and detailed setup instructions
+- Skool integration (API key, webhooks, sync) - **NEW**
+- Settings page with 3-platform toggle and detailed setup instructions
 - Database schema and migrations
 - Tracking script
 - Seed data system
@@ -621,5 +726,244 @@ curl http://localhost:3002/api/public/launches/{SHARE_TOKEN}
 - **Background job for status**: Runs every 5 minutes, ensures consistency
 - **Hybrid caching**: Active launches real-time, completed launches cached
 - **2 services not 3**: Consolidated sharing logic into launchService
-- **UUID v4 share tokens**: Secure, unguessable, 128-bit entropy
+- **UUID v4 share tokens**: Secure, unguassable, 128-bit entropy
 - **Public page no auth**: Enables viral sharing without friction
+
+---
+
+## AI-Powered Recommendations Feature
+
+### Overview
+
+CourseSignal features an intelligent recommendation engine that provides actionable insights based on revenue data. The system uses a hybrid approach: OpenAI GPT-4o-mini for contextual AI recommendations (when enabled), with automatic fallback to rule-based recommendations.
+
+### Architecture
+
+**Backend Components:**
+
+1. **`backend/src/services/recommendationService.ts`** - Core recommendation engine
+   - `getRecommendations()` - Main entry point with caching
+   - `generateAIRecommendations()` - OpenAI-powered insights using GPT-4o-mini
+   - `generateRuleBasedRecommendations()` - Fallback logic with hardcoded thresholds
+   - `getUserAIPreference()` / `updateUserAIPreference()` - User preference management
+   - In-memory cache with 1-hour TTL for AI recommendations, 15-minute TTL for rule-based
+
+2. **`backend/src/routes/recommendations.ts`** - API endpoints
+   ```
+   POST   /api/recommendations/generate     - Generate recommendations with analytics data
+   GET    /api/recommendations/preference   - Get user's AI preference
+   PUT    /api/recommendations/preference   - Update AI preference (enable/disable)
+   POST   /api/recommendations/clear-cache  - Clear recommendation cache
+   ```
+
+3. **Database Migration:** `010_add_ai_recommendations_preference.sql`
+   - Adds `ai_recommendations_enabled` BOOLEAN column to `users` table (default: true)
+
+**Frontend Components:**
+
+1. **Settings Page** ([Settings.tsx](frontend/src/pages/Settings.tsx))
+   - Toggle switch for AI recommendations
+   - Visual indicator when API key not configured
+   - Real-time preference updates with cache clearing
+
+2. **Dashboard** ([Dashboard.tsx](frontend/src/pages/Dashboard.tsx))
+   - Fetches recommendations via API
+   - Shows "✨ AI-Powered" badge when using OpenAI
+   - Loading state during recommendation generation
+   - Automatic fallback to rule-based on API failure
+
+### How It Works
+
+**AI-Powered Mode (OpenAI):**
+1. Frontend sends analytics data (summary + sources) to `/api/recommendations/generate`
+2. Backend checks user's `ai_recommendations_enabled` preference
+3. If enabled + API key present:
+   - Constructs structured prompt with metrics, trends, and source breakdown
+   - Calls GPT-4o-mini with `response_format: { type: 'json_object' }`
+   - Validates and sanitizes AI response
+   - Returns 3-5 prioritized recommendations
+4. Response cached for 1 hour per user
+
+**Rule-Based Fallback:**
+- Triggered when: API key missing, user preference disabled, or OpenAI API fails
+- Logic: Hardcoded thresholds for revenue trends, conversion rates, AOV changes
+- Examples:
+  - Revenue decline >10% → Warning
+  - Conversion rate >5% → Opportunity
+  - High traffic + low conversion → Improve landing page
+- Cached for 15 minutes
+
+**Recommendation Schema:**
+```typescript
+{
+  id: string;
+  type: 'opportunity' | 'warning' | 'insight';
+  title: string;          // Max 60 chars
+  description: string;    // Max 150 chars
+  metric?: string;        // Optional highlight (e.g., "+$5,000")
+  action?: string;        // Specific action step (max 100 chars)
+  priority: 1-5;          // AI assigns priority, sorted by highest
+}
+```
+
+### Setup & Configuration
+
+**1. Install OpenAI Package:**
+```bash
+npm install openai --workspace=backend
+```
+
+**2. Add API Key to `.env`:**
+```bash
+OPENAI_API_KEY=sk-proj-...
+```
+
+**3. Run Database Migration:**
+```bash
+psql -d coursesignal -c "ALTER TABLE users ADD COLUMN IF NOT EXISTS ai_recommendations_enabled BOOLEAN DEFAULT true;"
+```
+
+**4. Restart Backend:**
+```bash
+npm run dev:backend
+```
+
+### Cost Optimization
+
+**Model Choice:** GPT-4o-mini ($0.15 input / $0.60 output per 1M tokens)
+- Average request: ~1,500 input tokens, ~500 output tokens
+- Cost per recommendation: ~$0.0005 (5 cents per 100 requests)
+- Expected monthly cost: $5-$20 for typical user base
+
+**Caching Strategy:**
+- 1-hour cache for AI recommendations (prevents repeated API calls)
+- Cache invalidated when:
+  - User changes date range
+  - User changes source filter
+  - User toggles AI preference
+  - Manual cache clear via `/clear-cache`
+
+**Fallback Benefits:**
+- Zero cost when API unavailable
+- Instant response (no API latency)
+- Privacy-conscious users can disable AI entirely
+
+### Testing AI Recommendations
+
+**1. Test with seed data:**
+```bash
+npm run seed
+# Navigate to http://localhost:5173/dashboard
+# Recommendations will appear below revenue table
+```
+
+**2. Test API directly:**
+```bash
+# Get AI preference
+curl http://localhost:3002/api/recommendations/preference \
+  -H "Authorization: Bearer YOUR_TOKEN"
+
+# Generate recommendations
+curl -X POST http://localhost:3002/api/recommendations/generate \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "summary": {
+      "totalRevenue": 10000,
+      "totalStudents": 50,
+      "avgOrderValue": 200,
+      "totalPurchases": 50,
+      "trends": { "revenue": 15, "students": 10, "avgOrderValue": 5 }
+    },
+    "sources": [
+      {
+        "source": "google",
+        "revenue": 5000,
+        "visitors": 500,
+        "students": 25,
+        "conversionRate": "5.0",
+        "avgOrderValue": "200.00",
+        "revenuePerVisitor": "10.00"
+      }
+    ]
+  }'
+
+# Toggle AI preference
+curl -X PUT http://localhost:3002/api/recommendations/preference \
+  -H "Authorization: Bearer YOUR_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"enabled": false}'
+```
+
+**3. Test without API key:**
+- Remove `OPENAI_API_KEY` from `.env`
+- Restart backend
+- Dashboard will show rule-based recommendations (no "AI-Powered" badge)
+- Settings page will show "Requires API Key" warning
+
+### Example Prompt Sent to OpenAI
+
+```
+You are an expert revenue analytics advisor for course creators. Analyze the following data and provide 3-5 actionable recommendations.
+
+METRICS SUMMARY:
+- Total Revenue: $10,500.00
+- Total Students: 45
+- Average Order Value: $233.33
+- Total Purchases: 45
+
+TRENDS (vs previous period):
+- Revenue: +18.5%
+- Students: +12.0%
+- AOV: +5.8%
+
+TRAFFIC SOURCES:
+- google:
+  * Visitors: 320
+  * Revenue: $6,200.00
+  * Students: 28
+  * Conversion Rate: 8.75%
+  * Avg Order Value: $221.43
+  * Revenue per Visitor: $19.38
+
+- facebook:
+  * Visitors: 180
+  * Revenue: $3,100.00
+  * Students: 12
+  * Conversion Rate: 6.67%
+  * Avg Order Value: $258.33
+  * Revenue per Visitor: $17.22
+
+[...]
+
+Please provide 3-5 recommendations as JSON with priority, type (opportunity/warning/insight), title, description, optional metric, and action.
+```
+
+### Files Modified/Created
+
+**Backend (5 files):**
+- Created: `backend/src/services/recommendationService.ts` (350+ lines)
+- Created: `backend/src/routes/recommendations.ts`
+- Created: `backend/src/db/migrations/010_add_ai_recommendations_preference.sql`
+- Modified: `backend/src/index.ts` (registered route)
+- Modified: `backend/package.json` (added openai dependency)
+
+**Frontend (2 files):**
+- Modified: `frontend/src/pages/Dashboard.tsx` (AI integration + badge)
+- Modified: `frontend/src/pages/Settings.tsx` (AI toggle UI)
+
+### Future Enhancements
+
+**Potential Improvements:**
+- Batch recommendation generation for multiple users (reduce API costs)
+- Personalized recommendations based on user history
+- A/B testing: AI vs rule-based effectiveness
+- Integration with launch tracking (launch-specific recommendations)
+- Email digests with weekly AI insights
+- Custom recommendation rules (user-defined thresholds)
+
+**Advanced AI Features:**
+- Multi-turn conversations ("Tell me more about Google Ads strategy")
+- Predictive analytics ("You're on track to hit $50K this quarter")
+- Anomaly detection ("Facebook conversion dropped 40% this week")
+- Competitor benchmarking (via external data sources)

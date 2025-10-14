@@ -1,4 +1,4 @@
-import { updateAllLaunchStatuses } from '../services/launchService';
+import { updateAllLaunchStatuses } from '../services/launches/launchService';
 
 /**
  * Background job to automatically update launch statuses

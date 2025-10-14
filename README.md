@@ -167,20 +167,17 @@ Target: >85% match rate
 
 ## Deployment
 
-### Backend (Railway/Render)
-1. Set environment variables
-2. Connect PostgreSQL database
-3. Deploy from GitHub
-4. Run migrations
+**Quick Deploy to Render:** See [RENDER_DEPLOYMENT.md](./RENDER_DEPLOYMENT.md) for complete step-by-step guide (30-45 minutes).
 
-### Frontend (Vercel/Netlify)
-1. Set `VITE_API_URL`
-2. Deploy from GitHub
-3. Configure custom domain
+**Key Steps:**
+1. Connect GitHub repo to Render
+2. Deploy via Blueprint (`render.yaml` auto-configures everything)
+3. Add environment variables (JWT_SECRET, ENCRYPTION_KEY, etc.)
+4. Run database migrations
+5. Get your tracking script and install on course site
 
-### Tracking Script (CloudFlare CDN)
-1. Upload `tracking-script/dist/track.js` to CDN
-2. Update script URL in backend
+**Other Platforms:**
+- See [DEPLOYMENT.md](./DEPLOYMENT.md) for Railway, Docker, Vercel, and self-hosted options
 
 ## What's Next
 

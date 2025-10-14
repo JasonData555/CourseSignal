@@ -18,7 +18,7 @@ import {
   expectAsyncThrow,
   query,
 } from '../utils';
-import * as launchService from '../../services/launchService';
+import * as launchService from '../../services/launches/launchService';
 
 describe('Launch Service', () => {
   beforeAll(async () => {

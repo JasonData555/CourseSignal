@@ -3,11 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '../components/design-system';
 import {
   InteractiveDashboardDemo,
-  LiveMatchRateWidget,
   ROICalculator,
   ComparisonSlider,
-  LaunchLeaderboard,
-  SocialProofMetrics,
+  LaunchDashboardShowcase,
   TestimonialCarousel,
 } from '../components/landing';
 import {
@@ -70,7 +68,7 @@ export default function Landing() {
         <div className="bg-gradient-to-r from-warning-500 to-warning-600 text-white py-2 px-4 text-center">
           <div className="flex items-center justify-center gap-2 text-sm font-medium">
             <Zap className="w-4 h-4" />
-            <span>Lock in early pricing: Starter $49/mo • Pro $99/mo • Premium $199/mo</span>
+            <span>Lock in early adopter rates forever: $49/month</span>
           </div>
         </div>
       </nav>
@@ -88,11 +86,11 @@ export default function Landing() {
             {/* Left Column - 55% */}
             <div className="lg:pr-8">
               <h1 className="text-5xl sm:text-6xl lg:text-7xl font-bold text-gray-900 mb-6 leading-tight">
-                Track which marketing drives revenue, not just clicks
+                Stop Wasting Money on Marketing That Doesn't Convert
               </h1>
 
               <p className="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-700 mb-6 leading-tight">
-                Revenue analytics built for Kajabi, Teachable, and Stripe
+                See which channels actually drive course sales. Built for Kajabi, Teachable, and Skool creators.
               </p>
 
               <p className="text-lg sm:text-xl text-gray-600 mb-8 leading-relaxed">
@@ -254,14 +252,11 @@ export default function Landing() {
             </p>
           </div>
 
-          <div className="grid lg:grid-cols-5 gap-8">
-            {/* Left: Leaderboard (60%) */}
-            <div className="lg:col-span-3">
-              <LaunchLeaderboard />
-            </div>
+          {/* Launch Dashboard Showcase */}
+          <LaunchDashboardShowcase />
 
-            {/* Right: Feature Explainer (40%) */}
-            <div className="lg:col-span-2">
+          {/* Feature Explainer Card */}
+          <div className="mt-12 max-w-md mx-auto lg:max-w-none lg:mx-0">
               <div className="bg-white rounded-lg shadow-card p-8 border border-gray-200 h-full">
                 <h3 className="text-2xl font-bold text-gray-900 mb-6">Why Track Launches?</h3>
 
@@ -316,7 +311,6 @@ export default function Landing() {
                   Set goals, track progress, share results
                 </p>
               </div>
-            </div>
           </div>
         </div>
       </section>
@@ -325,28 +319,6 @@ export default function Landing() {
       <section className="py-20 bg-gradient-to-br from-primary-50 to-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <ROICalculator onGetStarted={handleGetStarted} />
-        </div>
-      </section>
-
-      {/* Live Match Rate Widget */}
-      <section className="py-20 bg-gray-50">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <LiveMatchRateWidget />
-        </div>
-      </section>
-
-      {/* Social Proof Metrics */}
-      <section className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Trusted by Course Creators Worldwide
-            </h2>
-            <p className="text-xl text-gray-600">
-              Real data from real course creators using CourseSignal
-            </p>
-          </div>
-          <SocialProofMetrics />
         </div>
       </section>
 
@@ -458,7 +430,7 @@ export default function Landing() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-gray-900 mb-4">Simple, Transparent Pricing</h2>
-            <p className="text-xl text-gray-600 mb-6">Lock in early adopter rates forever</p>
+            <p className="text-xl text-gray-600 mb-6">Everything included. One price.</p>
 
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-warning-100 text-warning-800 rounded-lg border border-warning-200">
               <Zap className="w-5 h-5" />
@@ -468,10 +440,10 @@ export default function Landing() {
             </div>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            {/* Starter Tier */}
+          {/* Single Centered Pricing Card */}
+          <div className="max-w-md mx-auto">
             <div className="bg-white rounded-lg shadow-card hover:shadow-card-hover transition-shadow p-8 border border-gray-200">
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">Solo Creator</h3>
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">Complete Platform</h3>
               <div className="mb-6">
                 <span className="text-4xl font-bold text-gray-900">$49</span>
                 <span className="text-gray-600">/month</span>
@@ -480,127 +452,45 @@ export default function Landing() {
               <ul className="space-y-3 mb-8">
                 <li className="flex items-start gap-2">
                   <CheckCircle className="w-5 h-5 text-success-500 flex-shrink-0 mt-0.5" />
-                  <span className="text-sm text-gray-700">1 website</span>
+                  <span className="text-sm text-gray-700">Unlimited websites tracked</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle className="w-5 h-5 text-success-500 flex-shrink-0 mt-0.5" />
-                  <span className="text-sm text-gray-700">1 platform</span>
+                  <span className="text-sm text-gray-700">All platform integrations (Kajabi, Teachable, Stripe)</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle className="w-5 h-5 text-success-500 flex-shrink-0 mt-0.5" />
-                  <span className="text-sm text-gray-700">1 team member</span>
+                  <span className="text-sm text-gray-700">Advanced launch analytics</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle className="w-5 h-5 text-success-500 flex-shrink-0 mt-0.5" />
-                  <span className="text-sm text-gray-700">Launch reports</span>
+                  <span className="text-sm text-gray-700">Multi-touch attribution</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle className="w-5 h-5 text-success-500 flex-shrink-0 mt-0.5" />
-                  <span className="text-sm text-gray-700">Email support</span>
+                  <span className="text-sm text-gray-700">Unlimited team members</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="w-5 h-5 text-success-500 flex-shrink-0 mt-0.5" />
+                  <span className="text-sm text-gray-700">Priority email support</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="w-5 h-5 text-success-500 flex-shrink-0 mt-0.5" />
+                  <span className="text-sm text-gray-700">Export all data</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle className="w-5 h-5 text-success-500 flex-shrink-0 mt-0.5" />
+                  <span className="text-sm text-gray-700">All future features included</span>
                 </li>
               </ul>
 
               <Button fullWidth onClick={handleGetStarted}>
-                Start Trial
+                Start 14-Day Free Trial
               </Button>
-            </div>
 
-            {/* Pro Tier (Most Popular) */}
-            <div className="bg-white rounded-lg shadow-elevated p-8 border-2 border-primary-500 relative transform scale-105">
-              <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-primary-600 text-white rounded-full text-sm font-medium shadow-lg">
-                MOST POPULAR ⭐
-              </div>
-
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-2xl font-bold text-gray-900">Growing Brand</h3>
-                <div className="flex items-center gap-1 px-2 py-1 bg-warning-100 text-warning-700 rounded text-xs font-medium">
-                  <Rocket className="w-3 h-3" />
-                  <span>Popular for Launches</span>
-                </div>
-              </div>
-              <div className="mb-6">
-                <span className="text-4xl font-bold text-gray-900">$99</span>
-                <span className="text-gray-600">/month</span>
-              </div>
-
-              <ul className="space-y-3 mb-8">
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="w-5 h-5 text-success-500 flex-shrink-0 mt-0.5" />
-                  <span className="text-sm text-gray-700">5 websites</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="w-5 h-5 text-success-500 flex-shrink-0 mt-0.5" />
-                  <span className="text-sm text-gray-700">All platforms</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="w-5 h-5 text-success-500 flex-shrink-0 mt-0.5" />
-                  <span className="text-sm text-gray-700">5 team members</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="w-5 h-5 text-success-500 flex-shrink-0 mt-0.5" />
-                  <span className="text-sm text-gray-700">Launch reports</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="w-5 h-5 text-success-500 flex-shrink-0 mt-0.5" />
-                  <span className="text-sm text-gray-700">Priority email</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="w-5 h-5 text-success-500 flex-shrink-0 mt-0.5" />
-                  <span className="text-sm text-gray-700">Custom UTMs</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="w-5 h-5 text-success-500 flex-shrink-0 mt-0.5" />
-                  <span className="text-sm text-gray-700">API access</span>
-                </li>
-              </ul>
-
-              <Button fullWidth onClick={handleGetStarted}>
-                Start Trial
-              </Button>
-            </div>
-
-            {/* Premium Tier */}
-            <div className="bg-white rounded-lg shadow-card hover:shadow-card-hover transition-shadow p-8 border border-gray-200">
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">Course Business</h3>
-              <div className="mb-6">
-                <span className="text-4xl font-bold text-gray-900">$199</span>
-                <span className="text-gray-600">/month</span>
-              </div>
-
-              <ul className="space-y-3 mb-8">
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="w-5 h-5 text-success-500 flex-shrink-0 mt-0.5" />
-                  <span className="text-sm text-gray-700">Unlimited websites</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="w-5 h-5 text-success-500 flex-shrink-0 mt-0.5" />
-                  <span className="text-sm text-gray-700">All platforms</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="w-5 h-5 text-success-500 flex-shrink-0 mt-0.5" />
-                  <span className="text-sm text-gray-700">Unlimited team</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="w-5 h-5 text-success-500 flex-shrink-0 mt-0.5" />
-                  <span className="text-sm text-gray-700">Launch reports</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="w-5 h-5 text-success-500 flex-shrink-0 mt-0.5" />
-                  <span className="text-sm text-gray-700">Dedicated manager</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="w-5 h-5 text-success-500 flex-shrink-0 mt-0.5" />
-                  <span className="text-sm text-gray-700">White label</span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <CheckCircle className="w-5 h-5 text-success-500 flex-shrink-0 mt-0.5" />
-                  <span className="text-sm text-gray-700">Custom models</span>
-                </li>
-              </ul>
-
-              <Button fullWidth variant="secondary">
-                Contact Sales
-              </Button>
+              <p className="text-center text-sm text-gray-500 mt-4">
+                No credit card required
+              </p>
             </div>
           </div>
 
@@ -662,7 +552,7 @@ export default function Landing() {
               },
               {
                 q: 'What if I use multiple platforms?',
-                a: 'Pro and Premium plans support multiple platforms. Track Kajabi + Teachable + Stripe simultaneously.',
+                a: 'All platforms included. Track Kajabi + Teachable + Stripe simultaneously.',
               },
               {
                 q: 'Can I cancel anytime?',

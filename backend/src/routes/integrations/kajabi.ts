@@ -1,8 +1,8 @@
 import { Router, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
-import { AuthRequest, authenticate } from '../middleware/auth';
-import * as teachableService from '../services/teachableService';
-import { query } from '../db/connection';
+import { AuthRequest, authenticate } from '../../middleware/auth';
+import * as kajabiService from '../../services/integrations/kajabiService';
+import { query } from '../../db/connection';
 
 const router = Router();
 
@@ -17,7 +17,7 @@ router.get('/connect', authenticate, async (req: AuthRequest, res: Response) => 
       req.user!.userId,
     ]);
 
-    const authUrl = teachableService.getOAuthUrl(state);
+    const authUrl = kajabiService.getOAuthUrl(state);
 
     res.json({ authUrl });
   } catch (error) {
@@ -46,36 +46,36 @@ router.get('/callback', async (req, res) => {
     const userId = userResult.rows[0].id;
 
     // Exchange code for tokens
-    const { accessToken, refreshToken } = await teachableService.exchangeCodeForToken(
+    const { accessToken, refreshToken } = await kajabiService.exchangeCodeForToken(
       code as string
     );
 
     // Save integration
-    await teachableService.saveIntegration(userId, accessToken, refreshToken);
+    await kajabiService.saveIntegration(userId, accessToken, refreshToken);
 
     // Register webhook
-    await teachableService.registerWebhook(userId, accessToken);
+    await kajabiService.registerWebhook(userId, accessToken);
 
     // Clear state
     await query('UPDATE users SET password_reset_token = NULL WHERE id = $1', [userId]);
 
     // Start background sync
-    teachableService.syncPurchases(userId).catch((error) => {
+    kajabiService.syncPurchases(userId).catch((error) => {
       console.error('Background sync failed:', error);
     });
 
     // Redirect to frontend
-    res.redirect(`${process.env.APP_URL}/dashboard?teachable=connected`);
+    res.redirect(`${process.env.APP_URL}/dashboard?kajabi=connected`);
   } catch (error: any) {
     console.error('OAuth callback error:', error);
-    res.redirect(`${process.env.APP_URL}/dashboard?error=teachable_connection_failed`);
+    res.redirect(`${process.env.APP_URL}/dashboard?error=kajabi_connection_failed`);
   }
 });
 
 // Trigger manual sync
 router.post('/sync', authenticate, async (req: AuthRequest, res: Response) => {
   try {
-    const result = await teachableService.syncPurchases(req.user!.userId);
+    const result = await kajabiService.syncPurchases(req.user!.userId);
 
     res.json(result);
   } catch (error: any) {
@@ -86,7 +86,7 @@ router.post('/sync', authenticate, async (req: AuthRequest, res: Response) => {
 // Get sync status
 router.get('/sync-status', authenticate, async (req: AuthRequest, res: Response) => {
   try {
-    const status = await teachableService.getSyncStatus(req.user!.userId);
+    const status = await kajabiService.getSyncStatus(req.user!.userId);
 
     res.json({ status });
   } catch (error) {
@@ -97,7 +97,7 @@ router.get('/sync-status', authenticate, async (req: AuthRequest, res: Response)
 // Get integration status
 router.get('/status', authenticate, async (req: AuthRequest, res: Response) => {
   try {
-    const integration = await teachableService.getIntegration(req.user!.userId);
+    const integration = await kajabiService.getIntegration(req.user!.userId);
 
     if (!integration) {
       return res.json({ connected: false });
@@ -117,12 +117,12 @@ router.delete('/disconnect', authenticate, async (req: AuthRequest, res: Respons
   try {
     await query(
       'UPDATE platform_integrations SET status = $1, updated_at = NOW() WHERE user_id = $2 AND platform = $3',
-      ['disconnected', req.user!.userId, 'teachable']
+      ['disconnected', req.user!.userId, 'kajabi']
     );
 
-    res.json({ message: 'Teachable disconnected successfully' });
+    res.json({ message: 'Kajabi disconnected successfully' });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to disconnect Teachable' });
+    res.status(500).json({ error: 'Failed to disconnect Kajabi' });
   }
 });
 

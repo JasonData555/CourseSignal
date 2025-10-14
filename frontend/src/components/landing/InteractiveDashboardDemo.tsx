@@ -14,8 +14,10 @@ const sampleData: SourceData[] = [
   { source: 'YouTube', revenue: 8247, students: 12, visitors: 342, color: 'bg-chart-series1' },
   { source: 'Email', revenue: 5120, students: 8, visitors: 156, color: 'bg-chart-series2' },
   { source: 'Google Ads', revenue: 2890, students: 5, visitors: 428, color: 'bg-chart-series3' },
-  { source: 'Instagram', revenue: 412, students: 1, visitors: 89, color: 'bg-chart-series4' },
-  { source: 'Direct', revenue: 1890, students: 3, visitors: 67, color: 'bg-chart-series5' },
+  { source: 'Facebook', revenue: 2340, students: 4, visitors: 215, color: 'bg-chart-series4' },
+  { source: 'Instagram', revenue: 1680, students: 3, visitors: 189, color: 'bg-chart-series5' },
+  { source: 'TikTok', revenue: 890, students: 2, visitors: 134, color: 'bg-chart-series6' },
+  { source: 'Direct', revenue: 1890, students: 3, visitors: 67, color: 'bg-chart-series7' },
 ];
 
 export function InteractiveDashboardDemo() {

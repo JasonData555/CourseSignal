@@ -2,22 +2,25 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
+import path from 'path';
 import authRoutes from './routes/auth';
 import trackingRoutes from './routes/tracking';
 import scriptRoutes from './routes/script';
-import kajabiRoutes from './routes/kajabi';
-import teachableRoutes from './routes/teachable';
-import webhooksRoutes from './routes/webhooks';
+import kajabiRoutes from './routes/integrations/kajabi';
+import teachableRoutes from './routes/integrations/teachable';
+import skoolRoutes from './routes/integrations/skool';
+import webhooksRoutes from './routes/integrations/webhooks';
 import analyticsRoutes from './routes/analytics';
-import launchesRoutes from './routes/launches';
-import publicRoutes from './routes/public';
+import launchesRoutes from './routes/launches/launches';
+import publicRoutes from './routes/launches/public';
+import recommendationsRoutes from './routes/recommendations';
 import { apiLimiter } from './middleware/rateLimit';
 import { startLaunchStatusUpdater } from './jobs/launchStatusUpdater';
 
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3002;
 
 // Middleware
 app.use(helmet());
@@ -27,6 +30,9 @@ app.use(cors({
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Serve tracking script
+app.use('/track.js', express.static(path.join(__dirname, 'public', 'track.js')));
 
 // Health check
 app.get('/health', (req, res) => {
@@ -39,10 +45,12 @@ app.use('/api/tracking', trackingRoutes);
 app.use('/api/script', scriptRoutes);
 app.use('/api/kajabi', kajabiRoutes);
 app.use('/api/teachable', teachableRoutes);
+app.use('/api/skool', skoolRoutes);
 app.use('/api/webhooks', webhooksRoutes);
 app.use('/api/analytics', analyticsRoutes);
 app.use('/api/launches', launchesRoutes);
 app.use('/api/public', publicRoutes);
+app.use('/api/recommendations', recommendationsRoutes);
 
 // Apply rate limiting to API routes
 app.use('/api', apiLimiter);

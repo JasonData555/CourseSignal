@@ -1,0 +1,98 @@
+CourseSignal Backend Structure
+================================
+
+backend/src/
+│
+├── index.ts                        # Main Express app entry point
+│
+├── middleware/                     # Request middleware
+│   ├── auth.ts                     # JWT authentication
+│   └── rateLimit.ts                # API rate limiting
+│
+├── services/                       # Business logic layer
+│   │
+│   ├── Core Services (Root Level)
+│   ├── attributionService.ts       # Purchase → visitor attribution
+│   ├── trackingService.ts          # Visitor/session tracking
+│   ├── analyticsService.ts         # Dashboard metrics
+│   ├── authService.ts              # User authentication
+│   ├── emailService.ts             # Email notifications
+│   ├── recommendationService.ts    # AI recommendations
+│   │
+│   ├── integrations/               # Platform integration services
+│   │   ├── kajabiService.ts        # Kajabi OAuth + sync
+│   │   └── teachableService.ts     # Teachable OAuth + sync
+│   │
+│   └── launches/                   # Launch tracking services
+│       ├── launchService.ts        # Launch CRUD + sharing
+│       └── launchAnalyticsService.ts # Launch metrics
+│
+├── routes/                         # API endpoints layer
+│   │
+│   ├── Core Routes (Root Level)
+│   ├── auth.ts                     # /api/auth/*
+│   ├── tracking.ts                 # /api/tracking/*
+│   ├── script.ts                   # /api/script/*
+│   ├── analytics.ts                # /api/analytics/*
+│   ├── recommendations.ts          # /api/recommendations/*
+│   │
+│   ├── integrations/               # Platform integration routes
+│   │   ├── kajabi.ts               # /api/kajabi/*
+│   │   ├── teachable.ts            # /api/teachable/*
+│   │   └── webhooks.ts             # /api/webhooks/*
+│   │
+│   └── launches/                   # Launch-related routes
+│       ├── launches.ts             # /api/launches/*
+│       └── public.ts               # /api/public/* (no auth)
+│
+├── types/                          # Shared TypeScript types
+│   ├── common.ts                   # Common interfaces
+│   └── index.ts                    # Central export
+│
+├── db/                             # Database layer
+│   ├── connection.ts               # Pool + query helper
+│   ├── schema.sql                  # Full schema
+│   ├── migrate.ts                  # Migration runner
+│   ├── seed.ts                     # Test data generator
+│   ├── clear-data.ts               # Data cleanup
+│   └── migrations/                 # Migration files
+│       ├── 001_*.sql
+│       ├── 002_*.sql
+│       └── ...
+│
+├── jobs/                           # Background jobs
+│   └── launchStatusUpdater.ts      # Auto-update launch status
+│
+├── utils/                          # Utility functions
+│   ├── encryption.ts               # Token encryption
+│   ├── jwt.ts                      # JWT helpers
+│   └── validation.ts               # Input validation
+│
+└── __tests__/                      # Test suite
+    ├── services/                   # Service tests
+    ├── utils/                      # Test utilities
+    └── scripts/                    # Test DB setup/teardown
+
+
+Key Design Decisions
+====================
+
+1. Domain Grouping
+   - integrations/ for all platform-specific code (Kajabi, Teachable)
+   - launches/ for time-limited promotion features
+   - Core services remain at root for easy discovery
+
+2. Route-Service Alignment
+   - routes/ structure mirrors services/ structure
+   - Makes it easy to find corresponding business logic
+
+3. Type Centralization
+   - All shared types in types/common.ts
+   - Prevents duplicate type definitions
+   - Single source of truth for interfaces
+
+4. Scalability
+   - Easy to add new integrations (e.g., integrations/stripeService.ts)
+   - Easy to add new feature modules (e.g., services/reports/)
+   - Clear pattern to follow for new developers
+

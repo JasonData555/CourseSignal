@@ -13,8 +13,8 @@ services:
     env: node
     region: oregon # Choose: oregon, frankfurt, singapore
     plan: starter # Options: starter, standard, pro
-    buildCommand: cd backend && npm ci && npm run build
-    startCommand: cd backend && npm start
+    buildCommand: cd backend && npm ci && npm run build && cd ../tracking-script && npm ci && npm run build && mkdir -p ../backend/dist/public && cp dist/track.js ../backend/dist/public/
+    startCommand: cd backend && npm run migrate && npm start
     healthCheckPath: /health
     autoDeploy: true
 
@@ -53,11 +53,25 @@ services:
       - key: KAJABI_CLIENT_SECRET
         sync: false
 
+      - key: TEACHABLE_WEBHOOK_SECRET
+        sync: false
+
       # OAuth - Teachable
       - key: TEACHABLE_CLIENT_ID
         sync: false
 
       - key: TEACHABLE_CLIENT_SECRET
+        sync: false
+
+      # Skool Integration
+      - key: SKOOL_API_BASE
+        value: https://api.skoolapi.com
+
+      - key: SKOOL_WEBHOOK_SECRET
+        sync: false
+
+      # AI Recommendations
+      - key: OPENAI_API_KEY
         sync: false
 
       # Email

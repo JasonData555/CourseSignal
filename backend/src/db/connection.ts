@@ -1,5 +1,5 @@
 import { Pool } from 'pg';
-import dotenv from 'dotenv';
+import * as dotenv from 'dotenv';
 
 dotenv.config();
 
@@ -29,4 +29,5 @@ export const query = async (text: string, params?: any[]) => {
 
 export const getClient = () => pool.connect();
 
+export { pool };
 export default pool;

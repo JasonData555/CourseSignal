@@ -170,3 +170,35 @@ export async function getUserById(userId: string): Promise<User | null> {
     trialEndsAt: user.trial_ends_at,
   };
 }
+
+export async function changePassword(userId: string, currentPassword: string, newPassword: string) {
+  // Get user with current password hash
+  const result = await query(
+    'SELECT id, password_hash FROM users WHERE id = $1',
+    [userId]
+  );
+
+  if (result.rows.length === 0) {
+    throw new Error('User not found');
+  }
+
+  const user = result.rows[0];
+
+  // Verify current password
+  const isValid = await bcrypt.compare(currentPassword, user.password_hash);
+
+  if (!isValid) {
+    throw new Error('Current password is incorrect');
+  }
+
+  // Hash new password
+  const newPasswordHash = await bcrypt.hash(newPassword, 10);
+
+  // Update password
+  await query(
+    'UPDATE users SET password_hash = $1 WHERE id = $2',
+    [newPasswordHash, userId]
+  );
+
+  return { message: 'Password changed successfully' };
+}

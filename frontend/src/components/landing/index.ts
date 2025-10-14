@@ -1,7 +1,8 @@
 export { InteractiveDashboardDemo } from './InteractiveDashboardDemo';
-export { LiveMatchRateWidget } from './LiveMatchRateWidget';
 export { ROICalculator } from './ROICalculator';
 export { ComparisonSlider } from './ComparisonSlider';
-export { LaunchLeaderboard } from './LaunchLeaderboard';
-export { SocialProofMetrics } from './SocialProofMetrics';
+export { LaunchDashboardShowcase } from './LaunchDashboardShowcase';
 export { TestimonialCarousel } from './TestimonialCarousel';
+export { MetricCard } from './MetricCard';
+export { ChannelRow } from './ChannelRow';
+export { AnnotationCard } from './AnnotationCard';

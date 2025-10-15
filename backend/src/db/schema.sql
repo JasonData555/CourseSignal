@@ -15,8 +15,8 @@ CREATE TABLE IF NOT EXISTS users (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_users_email ON users(email);
-CREATE INDEX idx_users_stripe_customer ON users(stripe_customer_id);
+CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+CREATE INDEX IF NOT EXISTS idx_users_stripe_customer ON users(stripe_customer_id);
 
 -- Visitors table
 CREATE TABLE IF NOT EXISTS visitors (
@@ -30,10 +30,10 @@ CREATE TABLE IF NOT EXISTS visitors (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_visitors_user_id ON visitors(user_id);
-CREATE INDEX idx_visitors_visitor_id ON visitors(visitor_id);
-CREATE INDEX idx_visitors_email ON visitors(email);
-CREATE INDEX idx_visitors_fingerprint ON visitors(device_fingerprint);
+CREATE INDEX IF NOT EXISTS idx_visitors_user_id ON visitors(user_id);
+CREATE INDEX IF NOT EXISTS idx_visitors_visitor_id ON visitors(visitor_id);
+CREATE INDEX IF NOT EXISTS idx_visitors_email ON visitors(email);
+CREATE INDEX IF NOT EXISTS idx_visitors_fingerprint ON visitors(device_fingerprint);
 
 -- Sessions table
 CREATE TABLE IF NOT EXISTS sessions (
@@ -50,9 +50,9 @@ CREATE TABLE IF NOT EXISTS sessions (
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_sessions_visitor_id ON sessions(visitor_id);
-CREATE INDEX idx_sessions_timestamp ON sessions(timestamp);
-CREATE INDEX idx_sessions_source ON sessions(source);
+CREATE INDEX IF NOT EXISTS idx_sessions_visitor_id ON sessions(visitor_id);
+CREATE INDEX IF NOT EXISTS idx_sessions_timestamp ON sessions(timestamp);
+CREATE INDEX IF NOT EXISTS idx_sessions_source ON sessions(source);
 
 -- Purchases table
 CREATE TABLE IF NOT EXISTS purchases (
@@ -77,13 +77,13 @@ CREATE TABLE IF NOT EXISTS purchases (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_purchases_user_id ON purchases(user_id);
-CREATE INDEX idx_purchases_visitor_id ON purchases(visitor_id);
-CREATE INDEX idx_purchases_email ON purchases(email);
-CREATE INDEX idx_purchases_platform ON purchases(platform, platform_purchase_id);
-CREATE INDEX idx_purchases_purchased_at ON purchases(purchased_at);
-CREATE INDEX idx_purchases_first_touch_source ON purchases(first_touch_source);
-CREATE INDEX idx_purchases_last_touch_source ON purchases(last_touch_source);
+CREATE INDEX IF NOT EXISTS idx_purchases_user_id ON purchases(user_id);
+CREATE INDEX IF NOT EXISTS idx_purchases_visitor_id ON purchases(visitor_id);
+CREATE INDEX IF NOT EXISTS idx_purchases_email ON purchases(email);
+CREATE INDEX IF NOT EXISTS idx_purchases_platform ON purchases(platform, platform_purchase_id);
+CREATE INDEX IF NOT EXISTS idx_purchases_purchased_at ON purchases(purchased_at);
+CREATE INDEX IF NOT EXISTS idx_purchases_first_touch_source ON purchases(first_touch_source);
+CREATE INDEX IF NOT EXISTS idx_purchases_last_touch_source ON purchases(last_touch_source);
 
 -- Platform integrations table
 CREATE TABLE IF NOT EXISTS platform_integrations (
@@ -102,7 +102,7 @@ CREATE TABLE IF NOT EXISTS platform_integrations (
     UNIQUE(user_id, platform)
 );
 
-CREATE INDEX idx_integrations_user_id ON platform_integrations(user_id);
+CREATE INDEX IF NOT EXISTS idx_integrations_user_id ON platform_integrations(user_id);
 
 -- Sync jobs table
 CREATE TABLE IF NOT EXISTS sync_jobs (
@@ -118,8 +118,8 @@ CREATE TABLE IF NOT EXISTS sync_jobs (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_sync_jobs_user_id ON sync_jobs(user_id);
-CREATE INDEX idx_sync_jobs_status ON sync_jobs(status);
+CREATE INDEX IF NOT EXISTS idx_sync_jobs_user_id ON sync_jobs(user_id);
+CREATE INDEX IF NOT EXISTS idx_sync_jobs_status ON sync_jobs(status);
 
 -- Tracking events table (for raw events before attribution)
 CREATE TABLE IF NOT EXISTS tracking_events (
@@ -132,9 +132,9 @@ CREATE TABLE IF NOT EXISTS tracking_events (
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_tracking_events_user_id ON tracking_events(user_id);
-CREATE INDEX idx_tracking_events_visitor_id ON tracking_events(visitor_id);
-CREATE INDEX idx_tracking_events_timestamp ON tracking_events(timestamp);
+CREATE INDEX IF NOT EXISTS idx_tracking_events_user_id ON tracking_events(user_id);
+CREATE INDEX IF NOT EXISTS idx_tracking_events_visitor_id ON tracking_events(visitor_id);
+CREATE INDEX IF NOT EXISTS idx_tracking_events_timestamp ON tracking_events(timestamp);
 
 -- User tracking scripts table
 CREATE TABLE IF NOT EXISTS tracking_scripts (
@@ -144,8 +144,8 @@ CREATE TABLE IF NOT EXISTS tracking_scripts (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_tracking_scripts_user_id ON tracking_scripts(user_id);
-CREATE INDEX idx_tracking_scripts_script_id ON tracking_scripts(script_id);
+CREATE INDEX IF NOT EXISTS idx_tracking_scripts_user_id ON tracking_scripts(user_id);
+CREATE INDEX IF NOT EXISTS idx_tracking_scripts_script_id ON tracking_scripts(script_id);
 
 -- Refresh tokens table
 CREATE TABLE IF NOT EXISTS refresh_tokens (
@@ -156,8 +156,8 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_refresh_tokens_user_id ON refresh_tokens(user_id);
-CREATE INDEX idx_refresh_tokens_token ON refresh_tokens(token);
+CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user_id ON refresh_tokens(user_id);
+CREATE INDEX IF NOT EXISTS idx_refresh_tokens_token ON refresh_tokens(token);
 
 -- Launches table for tracking time-limited course launches
 CREATE TABLE IF NOT EXISTS launches (

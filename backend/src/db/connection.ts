@@ -11,7 +11,7 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   max: 20,
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 10000, // Increased from 2000 to 10000 for Render's network latency
+  connectionTimeoutMillis: 20000, // Increased to 20s for Render's database availability
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
 });
 

@@ -14,8 +14,8 @@ if (!process.env.DATABASE_URL) {
 
 import pool from './connection';
 
-const MAX_RETRIES = 5;
-const RETRY_DELAY = 3000; // 3 seconds
+const MAX_RETRIES = 10;
+const RETRY_DELAY = 5000; // 5 seconds (Render database may take longer to be ready)
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -29,7 +29,14 @@ async function waitForDatabase(retries = MAX_RETRIES): Promise<void> {
       console.log('Database connection successful!');
       return;
     } catch (error) {
-      console.warn(`Connection attempt ${i + 1} failed:`, (error as any)?.message);
+      console.error(`Connection attempt ${i + 1} failed:`, {
+        message: (error as any)?.message,
+        code: (error as any)?.code,
+        errno: (error as any)?.errno,
+        syscall: (error as any)?.syscall,
+        address: (error as any)?.address,
+        port: (error as any)?.port,
+      });
       if (i < retries - 1) {
         console.log(`Waiting ${RETRY_DELAY / 1000} seconds before retry...`);
         await sleep(RETRY_DELAY);

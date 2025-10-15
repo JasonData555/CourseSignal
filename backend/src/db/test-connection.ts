@@ -32,36 +32,79 @@ try {
   process.exit(1);
 }
 
-// Test connection
-const pool = new Pool({
+// Test connection with different SSL configurations
+console.log('\n--- Test 1: SSL with rejectUnauthorized: false ---');
+const pool1 = new Pool({
   connectionString: process.env.DATABASE_URL,
   connectionTimeoutMillis: 20000,
   ssl: { rejectUnauthorized: false },
 });
 
-console.log('\nAttempting connection...');
+pool1.query('SELECT NOW()', (err, res) => {
+  pool1.end();
 
-pool.query('SELECT NOW()', (err, res) => {
-  if (err) {
-    console.error('Connection FAILED:', {
-      message: err.message,
-      code: (err as any).code,
-      errno: (err as any).errno,
-      syscall: (err as any).syscall,
-      address: (err as any).address,
-      port: (err as any).port,
-    });
-    process.exit(1);
+  if (!err) {
+    console.log('✓ Test 1 SUCCESS!');
+    console.log('Database time:', res?.rows[0]?.now);
+    console.log('\nUse this SSL config: { rejectUnauthorized: false }');
+    process.exit(0);
   }
 
-  console.log('Connection SUCCESSFUL!');
-  console.log('Database time:', res?.rows[0]?.now);
-  pool.end();
-  process.exit(0);
+  console.log('✗ Test 1 failed:', err.message);
+
+  // Try Test 2
+  console.log('\n--- Test 2: No SSL (ssl: false) ---');
+  const pool2 = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    connectionTimeoutMillis: 20000,
+    ssl: false,
+  });
+
+  pool2.query('SELECT NOW()', (err2, res2) => {
+    pool2.end();
+
+    if (!err2) {
+      console.log('✓ Test 2 SUCCESS!');
+      console.log('Database time:', res2?.rows[0]?.now);
+      console.log('\nUse this SSL config: ssl: false (but this is unusual for Render)');
+      process.exit(0);
+    }
+
+    console.log('✗ Test 2 failed:', err2?.message);
+
+    // Try Test 3: Parse and modify connection string
+    console.log('\n--- Test 3: Add sslmode=require to connection string ---');
+    const dbUrlWithSsl = process.env.DATABASE_URL + '?sslmode=require';
+    const pool3 = new Pool({
+      connectionString: dbUrlWithSsl,
+      connectionTimeoutMillis: 20000,
+    });
+
+    pool3.query('SELECT NOW()', (err3, res3) => {
+      pool3.end();
+
+      if (!err3) {
+        console.log('✓ Test 3 SUCCESS!');
+        console.log('Database time:', res3?.rows[0]?.now);
+        console.log('\nUse this: append ?sslmode=require to DATABASE_URL');
+        process.exit(0);
+      }
+
+      console.log('✗ Test 3 failed:', err3?.message);
+      console.log('\n❌ All connection tests failed!');
+      console.log('\nError details from Test 1:', {
+        message: err.message,
+        code: (err as any).code,
+      });
+      process.exit(1);
+    });
+  });
 });
 
-// Timeout after 30 seconds
+const pool = pool1; // For compatibility
+
+// Timeout after 60 seconds
 setTimeout(() => {
-  console.error('Connection test timed out after 30 seconds');
+  console.error('\n⏱️  Connection test timed out after 60 seconds');
   process.exit(1);
-}, 30000);
+}, 60000);

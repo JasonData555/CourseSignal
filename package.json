@@ -8,6 +8,10 @@
     "frontend",
     "tracking-script"
   ],
+  "engines": {
+    "node": ">=22.0.0",
+    "npm": ">=10.0.0"
+  },
   "scripts": {
     "dev:backend": "cd backend && DATABASE_URL=postgresql://localhost:5432/coursesignal npm run dev",
     "dev:frontend": "npm run dev --workspace=frontend",

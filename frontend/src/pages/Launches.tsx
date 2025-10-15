@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../components/layouts';
-import { Button, EmptyState, MetricCardSkeleton } from '../components/design-system';
+import { Button, MetricCardSkeleton } from '../components/design-system';
 import { LaunchCard, LaunchStatus } from '../components/launches';
 import { Plus, Rocket } from 'lucide-react';
 import api from '../lib/api';

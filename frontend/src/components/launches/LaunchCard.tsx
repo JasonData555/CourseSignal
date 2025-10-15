@@ -1,6 +1,6 @@
 import { Card } from '../design-system';
 import { LaunchStatusBadge, LaunchStatus } from './LaunchStatusBadge';
-import { Calendar, DollarSign, Users, Clock, TrendingUp, Award } from 'lucide-react';
+import { Calendar, DollarSign, Users, Clock, Award } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 interface LaunchCardProps {

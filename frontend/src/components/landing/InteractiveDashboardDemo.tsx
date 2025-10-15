@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { TrendingUp, Users, DollarSign, ShoppingCart, ExternalLink } from 'lucide-react';
 import { clsx } from 'clsx';
 
@@ -28,7 +28,8 @@ export function InteractiveDashboardDemo() {
   const totalStudents = sampleData.reduce((sum, item) => sum + item.students, 0);
   const totalVisitors = sampleData.reduce((sum, item) => sum + item.visitors, 0);
 
-  const selected = selectedSource ? sampleData.find((s) => s.source === selectedSource) : null;
+  // Currently unused but available for future interactivity
+  // const selected = selectedSource ? sampleData.find((s) => s.source === selectedSource) : null;
 
   return (
     <div className="relative">

@@ -1,7 +1,5 @@
-import { useState } from 'react';
 import { X, Rocket, Settings as SettingsIcon } from 'lucide-react';
 import { Button } from '../design-system';
-import { clsx } from 'clsx';
 
 interface WelcomeModalProps {
   isOpen: boolean;

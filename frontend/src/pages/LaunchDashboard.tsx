@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { DashboardLayout } from '../components/layouts';
 import { Card, Button, MetricCard, EmptyState, MetricCardSkeleton, Breadcrumbs } from '../components/design-system';
@@ -8,7 +8,7 @@ import {
   LaunchTimeline,
   LaunchStatus,
 } from '../components/launches';
-import { RevenueBySource, RecentPurchases } from '../components/dashboard';
+// import { RevenueBySource } from '../components/dashboard';
 import {
   DollarSign,
   Users,
@@ -58,11 +58,12 @@ interface SourceData {
   percentage: number;
 }
 
-interface DailyRevenue {
-  date: string;
-  revenue: number;
-  purchases: number;
-}
+// Daily revenue interface for future chart implementations
+// interface DailyRevenue {
+//   date: string;
+//   revenue: number;
+//   purchases: number;
+// }
 
 export default function LaunchDashboard() {
   const { id } = useParams<{ id: string }>();
@@ -70,7 +71,8 @@ export default function LaunchDashboard() {
   const [launch, setLaunch] = useState<LaunchData | null>(null);
   const [metrics, setMetrics] = useState<LaunchMetrics | null>(null);
   const [attribution, setAttribution] = useState<SourceData[]>([]);
-  const [dailyRevenue, setDailyRevenue] = useState<DailyRevenue[]>([]);
+  // Daily revenue data available for future charts
+  // const [dailyRevenue, setDailyRevenue] = useState<DailyRevenue[]>([]);
   const [viewCount, setViewCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [shareLoading, setShareLoading] = useState(false);
@@ -101,7 +103,7 @@ export default function LaunchDashboard() {
       setLaunch(launchRes.data);
       setMetrics(analyticsRes.data.metrics);
       setAttribution(analyticsRes.data.attribution);
-      setDailyRevenue(analyticsRes.data.dailyRevenue);
+      // setDailyRevenue(analyticsRes.data.dailyRevenue);
       setViewCount(viewsRes.data.viewCount);
     } catch (error) {
       console.error('Failed to fetch launch data:', error);

@@ -45,7 +45,7 @@ pool.query('SELECT NOW()', (err, res) => {
   if (err) {
     console.error('Connection FAILED:', {
       message: err.message,
-      code: err.code,
+      code: (err as any).code,
       errno: (err as any).errno,
       syscall: (err as any).syscall,
       address: (err as any).address,
@@ -55,7 +55,7 @@ pool.query('SELECT NOW()', (err, res) => {
   }
 
   console.log('Connection SUCCESSFUL!');
-  console.log('Database time:', res.rows[0].now);
+  console.log('Database time:', res?.rows[0]?.now);
   pool.end();
   process.exit(0);
 });

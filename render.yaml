@@ -13,7 +13,7 @@ services:
     runtime: node
     region: oregon # Choose: oregon, frankfurt, singapore
     plan: starter # Options: starter, standard, pro
-    buildCommand: npm install && npm run build --workspace=tracking-script && npm run build --workspace=backend && mkdir -p backend/dist/public && cp tracking-script/dist/track.js backend/dist/public/
+    buildCommand: npm install --include=dev && cd tracking-script && npm install --include=dev && cd ../backend && npm install --include=dev && cd .. && npm run build --workspace=tracking-script && npm run build --workspace=backend && mkdir -p backend/dist/public && cp tracking-script/dist/track.js backend/dist/public/
     startCommand: cd backend && node dist/db/migrate.js && node dist/index.js
     healthCheckPath: /health
     autoDeploy: true

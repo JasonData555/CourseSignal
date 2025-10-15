@@ -2,8 +2,10 @@ import { Pool } from 'pg';
 import * as dotenv from 'dotenv';
 import { join } from 'path';
 
-// Load .env from backend root directory (handles both dev and compiled dist scenarios)
-dotenv.config({ path: join(__dirname, '../../.env') });
+// Load .env ONLY in development (Render injects env vars directly in production)
+if (process.env.NODE_ENV !== 'production') {
+  dotenv.config({ path: join(__dirname, '../../.env') });
+}
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,

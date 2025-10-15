@@ -14,7 +14,8 @@ services:
     region: oregon # Choose: oregon, frankfurt, singapore
     plan: starter # Options: starter, standard, pro
     buildCommand: npm ci && npm run build --workspace=tracking-script && npm run build --workspace=backend && mkdir -p backend/dist/public && cp tracking-script/dist/track.js backend/dist/public/
-    startCommand: cd backend && node dist/db/migrate.js && node dist/index.js
+    preDeployCommand: cd backend && node dist/db/migrate.js
+    startCommand: cd backend && node dist/index.js
     healthCheckPath: /health
     autoDeploy: true
 
@@ -172,10 +173,16 @@ databases:
 #   - STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET
 #
 # DATABASE MIGRATIONS:
-#   After first deploy, run migrations manually:
+#   Migrations run automatically via preDeployCommand before each deployment.
+#   If migrations fail, check:
+#   1. Database service is created and running
+#   2. Database service name matches 'coursesignal-postgres' in this file
+#   3. DATABASE_URL environment variable is properly linked from database
+#
+#   Manual migration (if needed):
 #   1. Go to backend service in Render dashboard
 #   2. Open Shell tab
-#   3. Run: npm run migrate
+#   3. Run: cd backend && node dist/db/migrate.js
 #
 # REDIS (Free Tier Workaround):
 #   If using free tier without Render Redis:

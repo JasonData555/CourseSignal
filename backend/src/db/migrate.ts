@@ -1,5 +1,17 @@
 import { readFileSync } from 'fs';
 import { join } from 'path';
+
+// CHECK DATABASE_URL BEFORE IMPORTING CONNECTION
+// This ensures the env var is set before Pool instantiation
+if (!process.env.DATABASE_URL) {
+  console.error('='.repeat(60));
+  console.error('✗ DATABASE_URL environment variable is not set');
+  console.error('='.repeat(60));
+  console.error('NODE_ENV:', process.env.NODE_ENV);
+  console.error('Available env vars:', Object.keys(process.env).filter(k => k.includes('DATA') || k.includes('SQL') || k.includes('PG')).join(', '));
+  process.exit(1);
+}
+
 import pool from './connection';
 
 const MAX_RETRIES = 5;

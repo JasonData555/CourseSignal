@@ -6,6 +6,12 @@ async function runMigration() {
   try {
     console.log('Running database migration...');
     console.log('Current directory:', __dirname);
+    console.log('NODE_ENV:', process.env.NODE_ENV);
+
+    // Explicit check for DATABASE_URL
+    if (!process.env.DATABASE_URL) {
+      throw new Error('DATABASE_URL environment variable is not set');
+    }
     console.log('DATABASE_URL configured:', !!process.env.DATABASE_URL);
 
     const schemaPath = join(__dirname, 'schema.sql');

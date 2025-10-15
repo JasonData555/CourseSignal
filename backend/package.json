@@ -9,7 +9,7 @@
     "build:production": "npm run build && cd ../tracking-script && npm run build && cp dist/track.js ../backend/dist/public/",
     "start": "node dist/index.js",
     "start:production": "npm run migrate && npm start",
-    "migrate": "node dist/db/migrate.js || tsx src/db/migrate.ts",
+    "migrate": "node dist/db/migrate.js",
     "test": "NODE_ENV=test jest --runInBand",
     "test:watch": "NODE_ENV=test jest --watch --runInBand",
     "test:coverage": "NODE_ENV=test jest --coverage --runInBand",

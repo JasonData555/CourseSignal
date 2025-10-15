@@ -1,13 +1,16 @@
 import { Pool } from 'pg';
 import * as dotenv from 'dotenv';
+import { join } from 'path';
 
-dotenv.config();
+// Load .env from backend root directory (handles both dev and compiled dist scenarios)
+dotenv.config({ path: join(__dirname, '../../.env') });
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   max: 20,
   idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
+  connectionTimeoutMillis: 10000, // Increased from 2000 to 10000 for Render's network latency
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
 });
 
 pool.on('error', (err) => {

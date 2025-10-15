@@ -17,7 +17,8 @@ import recommendationsRoutes from './routes/recommendations';
 import { apiLimiter } from './middleware/rateLimit';
 import { startLaunchStatusUpdater } from './jobs/launchStatusUpdater';
 
-dotenv.config();
+// Load environment variables from .env file (handles both dev and compiled dist scenarios)
+dotenv.config({ path: path.join(__dirname, '../.env') });
 
 const app = express();
 const PORT = process.env.PORT || 3002;

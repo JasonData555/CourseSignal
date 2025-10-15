@@ -13,7 +13,7 @@ services:
     runtime: node
     region: oregon # Choose: oregon, frankfurt, singapore
     plan: starter # Options: starter, standard, pro
-    buildCommand: npm ci && npm run build --workspace=tracking-script && npm run build --workspace=backend && mkdir -p backend/dist/public && cp tracking-script/dist/track.js backend/dist/public/
+    buildCommand: corepack disable && npm ci && npm run build --workspace=tracking-script && npm run build --workspace=backend && mkdir -p backend/dist/public && cp tracking-script/dist/track.js backend/dist/public/
     startCommand: cd backend && npm run migrate && npm start
     healthCheckPath: /health
     autoDeploy: true
@@ -94,7 +94,7 @@ services:
   - type: web
     name: coursesignal-frontend
     runtime: static
-    buildCommand: npm ci && npm run build --workspace=frontend
+    buildCommand: corepack disable && npm ci && npm run build --workspace=frontend
     staticPublishPath: ./frontend/dist
 
     envVars:

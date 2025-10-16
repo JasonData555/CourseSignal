@@ -39,6 +39,9 @@ services:
       - key: JWT_SECRET
         sync: false # Must be set manually in Render dashboard
 
+      - key: JWT_REFRESH_SECRET
+        sync: false # Required for refresh token authentication
+
       - key: ENCRYPTION_KEY
         sync: false
 
@@ -76,6 +79,19 @@ services:
 
       - key: FROM_EMAIL
         value: noreply@coursesignal.com
+
+      # SMTP Configuration (for email via SendGrid SMTP)
+      - key: SMTP_HOST
+        value: smtp.sendgrid.net
+
+      - key: SMTP_PORT
+        value: 587
+
+      - key: SMTP_USER
+        value: apikey # SendGrid SMTP username is literally "apikey"
+
+      - key: SMTP_PASSWORD
+        sync: false # Set to your SENDGRID_API_KEY value
 
       # Stripe
       - key: STRIPE_SECRET_KEY
@@ -164,12 +180,15 @@ databases:
 # 6. Trigger deploy or push to main branch
 #
 # IMPORTANT: Set these secrets in Render dashboard before deploying:
-#   - JWT_SECRET (generate: node -e "console.log(require('crypto').randomBytes(64).toString('hex'))")
-#   - ENCRYPTION_KEY (generate: node -e "console.log(require('crypto').randomBytes(32).toString('hex'))")
-#   - KAJABI_CLIENT_ID and KAJABI_CLIENT_SECRET
-#   - TEACHABLE_CLIENT_ID and TEACHABLE_CLIENT_SECRET
-#   - SENDGRID_API_KEY
-#   - STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET
+#   - JWT_SECRET (generate: openssl rand -hex 64)
+#   - JWT_REFRESH_SECRET (generate: openssl rand -hex 64) ⚠️ REQUIRED - App crashes without this!
+#   - ENCRYPTION_KEY (generate: openssl rand -hex 32)
+#   - KAJABI_CLIENT_ID and KAJABI_CLIENT_SECRET (if using Kajabi)
+#   - TEACHABLE_CLIENT_ID and TEACHABLE_CLIENT_SECRET (if using Teachable)
+#   - SENDGRID_API_KEY (for email verification/password reset)
+#   - SMTP_HOST, SMTP_USER, SMTP_PASSWORD (for email via SMTP)
+#   - STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET (if using Stripe billing)
+#   - OPENAI_API_KEY (optional - for AI-powered recommendations)
 #
 # DATABASE MIGRATIONS:
 #   Migrations run automatically via preDeployCommand before each deployment.
